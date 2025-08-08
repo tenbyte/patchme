@@ -14,17 +14,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-const nav = [
-  { href: "/", label: "Dashboard" },
-  { href: "/systems", label: "Systems" },
-  { href: "/baselines", label: "Baselines" },
-  { href: "/tags", label: "Tags" },
-  { href: "/settings", label: "Settings" },
-]
-
-export default function TopBar({ userName = "Admin" }: { userName?: string }) {
+export default function TopBar({ userName, userRole }: { userName?: string, userRole?: string }) {
   const pathname = usePathname()
   const router = useRouter()
+  const isLoggedIn = !!userName && userName !== "Guest"
+
+  const nav = [
+    { href: "/", label: "Dashboard" },
+    { href: "/systems", label: "Systems" },
+    { href: "/baselines", label: "Baselines" },
+    { href: "/tags", label: "Tags" },
+    ...(userRole === "admin" ? [{ href: "/settings", label: "Settings" }] : [])
+  ]
+
+  const handleLogout = async () => {
+    await fetch("/api/logout", { method: "POST" })
+    router.push("/login")
+    router.refresh()
+  }
 
   return (
     <header className="sticky top-0 z-30 bg-background/80 backdrop-blur border-b">
@@ -34,39 +41,48 @@ export default function TopBar({ userName = "Admin" }: { userName?: string }) {
             <ShieldCheck className="w-5 h-5" />
           </div>
           <span className="font-semibold">PatchMe</span>
-          <nav className="ml-4 hidden md:flex items-center gap-1">
-            {nav.map((n) => {
-              const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href)
-              return (
-                <Link
-                  key={n.href}
-                  href={n.href}
-                  className={cn(
-                    "rounded-md px-3 py-1.5 text-sm transition-colors",
-                    active ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted"
-                  )}
-                >
-                  {n.label}
-                </Link>
-              )
-            })}
-          </nav>
+          {isLoggedIn && (
+            <nav className="ml-4 hidden md:flex items-center gap-1">
+              {nav.map((n) => {
+                const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href)
+                return (
+                  <Link
+                    key={n.href}
+                    href={n.href}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-sm transition-colors",
+                      active ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    {n.label}
+                  </Link>
+                )
+              })}
+            </nav>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 px-2 gap-2">
                 <UserIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">{`Welcome, ${userName}`}</span>
+                <span className="hidden sm:inline">{isLoggedIn ? `Welcome, ${userName}` : "Welcome, Guest"}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Signed in as {userName}</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                {isLoggedIn ? `Signed in as ${userName}` : "Not signed in"}
+              </DropdownMenuLabel>
+              <div className="px-2 py-1 text-xs text-muted-foreground">
+                Role: {isLoggedIn ? userRole : "-"}
+              </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push("/login")} className="flex items-center gap-2">
-                <LogOut className="w-4 h-4" />
-                Log out
-              </DropdownMenuItem>
+              {isLoggedIn ? (
+                <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
+                  <LogOut className="w-4 h-4" />
+                  Log out
+                </DropdownMenuItem>
+              ) : null}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

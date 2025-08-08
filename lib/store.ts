@@ -130,11 +130,18 @@ if (!g.__PATCHME_STORE__) {
     ],
     users: [
       {
-        id: crypto.randomUUID(),
+        id: "1",
         name: "Admin",
-        email: "admin@example.com",
-        password: "admin", // demo only
+        email: "admin@patchme.local",
+        password: "admin123",
         role: "admin",
+      },
+      {
+        id: "2",
+        name: "Demo User",
+        email: "user@patchme.local",
+        password: "demo123",
+        role: "user",
       },
     ],
     sessions: {},

@@ -14,16 +14,34 @@ export default function LoginPage() {
   const emailRef = useRef<HTMLInputElement>(null)
   const passRef = useRef<HTMLInputElement>(null)
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
-    // No auth, just go to dashboard
-    router.push("/")
+    const email = emailRef.current?.value
+    const password = passRef.current?.value
+    if (!email || !password) return
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    })
+    if (res.ok) {
+      router.push("/")
+      router.refresh()
+    } else {
+      setSubmitting(false)
+      alert("Login fehlgeschlagen")
+    }
   }
 
-  const fillDemo = () => {
-    if (emailRef.current) emailRef.current.value = "admin@example.com"
-    if (passRef.current) passRef.current.value = "admin"
+  const fillAdmin = () => {
+    if (emailRef.current) emailRef.current.value = "admin@patchme.local"
+    if (passRef.current) passRef.current.value = "admin123"
+    document.getElementById("login-submit")?.focus()
+  }
+  const fillDemoUser = () => {
+    if (emailRef.current) emailRef.current.value = "user@patchme.local"
+    if (passRef.current) passRef.current.value = "demo123"
     document.getElementById("login-submit")?.focus()
   }
 
@@ -53,10 +71,13 @@ export default function LoginPage() {
               {submitting ? "Signing in..." : "Sign in"}
             </Button>
 
-            {/* Test helper: fills in the demo credentials */}
-            <div className="grid">
-              <Button type="button" onClick={fillDemo} variant="secondary">
-                Fill out
+
+            <div className="grid grid-cols-2 gap-2">
+              <Button type="button" onClick={fillAdmin} variant="secondary">
+                Admin ausfüllen
+              </Button>
+              <Button type="button" onClick={fillDemoUser} variant="secondary">
+                Demo-User ausfüllen
               </Button>
             </div>
 

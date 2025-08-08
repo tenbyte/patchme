@@ -1,4 +1,3 @@
-import TopBar from "@/components/topbar"
 import Dashboard from "@/components/dashboard"
 import { getActivity, getBaselines, getSystems, getSystemStatusCounts, getTagNames } from "@/lib/store"
 
@@ -13,7 +12,6 @@ export default async function Page() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <TopBar userName="Admin" />
       <Dashboard
         systems={systems}
         baselines={baselines}
