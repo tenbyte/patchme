@@ -26,8 +26,7 @@ export default function LoginPage() {
       body: JSON.stringify({ email, password })
     })
     if (res.ok) {
-      router.push("/")
-      router.refresh()
+      window.location.href = "/"
     } else {
       setSubmitting(false)
       alert("Login fehlgeschlagen")

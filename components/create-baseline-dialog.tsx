@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createBaseline } from "@/app/server-actions"
+import { createBaseline } from "@/lib/baseline"
 
 type Props = {
   open?: boolean
@@ -39,15 +39,15 @@ export default function CreateBaselineDialog({ open = false, onOpenChange = () =
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-2">
             <Label htmlFor="bname">Name</Label>
-            <Input id="bname" value={name} onChange={(e) => setName(e.target.value)} required placeholder="PHP" />
+            <Input id="bname" name="baselineName" autoComplete="off" value={name} onChange={(e) => setName(e.target.value)} required placeholder="PHP" />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="bvar">Variable</Label>
-            <Input id="bvar" value={variable} onChange={(e) => setVariable(e.target.value)} required placeholder="PHP_Version" />
+            <Input id="bvar" name="baselineVariable" autoComplete="off" value={variable} onChange={(e) => setVariable(e.target.value)} required placeholder="PHP_Version" />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="bmin">Min version</Label>
-            <Input id="bmin" value={minVersion} onChange={(e) => setMinVersion(e.target.value)} required placeholder="8.3" />
+            <Input id="bmin" name="baselineMinVersion" autoComplete="off" value={minVersion} onChange={(e) => setMinVersion(e.target.value)} required placeholder="8.3" />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

@@ -61,7 +61,7 @@ export default function CreateSystemDialog({ open = false, onOpenChange = () => 
           <div className="grid gap-3 md:grid-cols-2">
             <div className="grid gap-1.5">
               <Label htmlFor="name">Name</Label>
-              <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} />
+              <Input id="name" name="systemName" autoComplete="off" required value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="hostname">Hostname / URL</Label>

@@ -1,25 +1,36 @@
 import { NextRequest, NextResponse } from "next/server"
-import jwt from "jsonwebtoken"
+import { jwtVerify } from "jose"
 
-const JWT_SECRET = process.env.JWT_SECRET || "changeme-supersecret" // In Produktion als ENV setzen!
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "changeme-supersecret")
 
-export function middleware(req: NextRequest) {
-  const publicPaths = ["/login", "/api/login", "/api/ingest", "/favicon.svg"]
-  if (publicPaths.some((p) => req.nextUrl.pathname.startsWith(p))) {
-    return NextResponse.next()
-  }
+export async function middleware(req: NextRequest) {
   const token = req.cookies.get("pmsession")?.value
-  if (!token) {
+  const isLogin = req.nextUrl.pathname === "/login"
+
+  let validToken = false
+  if (token) {
+    try {
+      await jwtVerify(token, JWT_SECRET)
+      validToken = true
+    } catch {
+      validToken = false
+    }
+  }
+
+  if (isLogin && validToken) {
+    return NextResponse.redirect(new URL("/", req.url))
+  }
+
+  if (!validToken && !isLogin && !req.nextUrl.pathname.startsWith("/api/")) {
     return NextResponse.redirect(new URL("/login", req.url))
   }
-  try {
-    jwt.verify(token, JWT_SECRET)
-  } catch (e) {
-    return NextResponse.redirect(new URL("/login", req.url))
-  }
+
+
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/((?!_next|public|api/login|api/ingest|login).*)"],
+  matcher: [
+    "/((?!api/ingest|api/login|login|favicon.svg|.*\\.js$|.*\\.css$|_next/).*)",
+  ],
 }

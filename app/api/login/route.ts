@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
   }
 
-  // JWT erzeugen
+
   const payload = {
     userId: user.id,
     name: user.name,
