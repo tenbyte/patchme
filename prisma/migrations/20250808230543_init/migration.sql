@@ -73,6 +73,7 @@ CREATE TABLE `SystemBaselineValue` (
     `baselineId` VARCHAR(191) NOT NULL,
     `value` VARCHAR(191) NOT NULL,
 
+    UNIQUE INDEX `SystemBaselineValue_systemId_baselineId_key`(`systemId`, `baselineId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

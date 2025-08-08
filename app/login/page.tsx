@@ -34,17 +34,6 @@ export default function LoginPage() {
     }
   }
 
-  const fillAdmin = () => {
-    if (emailRef.current) emailRef.current.value = "admin@patchme.local"
-    if (passRef.current) passRef.current.value = "admin123"
-    document.getElementById("login-submit")?.focus()
-  }
-  const fillDemoUser = () => {
-    if (emailRef.current) emailRef.current.value = "user@patchme.local"
-    if (passRef.current) passRef.current.value = "demo123"
-    document.getElementById("login-submit")?.focus()
-  }
-
   return (
     <main className="min-h-screen grid place-items-center bg-background px-4">
       <Card className="w-full max-w-md shadow">
@@ -54,36 +43,21 @@ export default function LoginPage() {
             <span className="font-semibold">PatchMe</span>
           </div>
           <CardTitle>Sign in</CardTitle>
-          <CardDescription>Use any credentials for this demo, or auto-fill below.</CardDescription>
+          <CardDescription>Please sign in with your credentials.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="grid gap-1.5">
               <Label htmlFor="email">Email</Label>
-              <Input ref={emailRef} id="email" name="email" type="email" required placeholder="you@example.com" />
+              <Input ref={emailRef} id="email" name="email" type="email" required placeholder="you@patchme.local" />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="password">Password</Label>
               <Input ref={passRef} id="password" name="password" type="password" required placeholder="••••••••" />
             </div>
-
             <Button id="login-submit" type="submit" className="w-full" disabled={submitting}>
               {submitting ? "Signing in..." : "Sign in"}
             </Button>
-
-
-            <div className="grid grid-cols-2 gap-2">
-              <Button type="button" onClick={fillAdmin} variant="secondary">
-                Admin ausfüllen
-              </Button>
-              <Button type="button" onClick={fillDemoUser} variant="secondary">
-                Demo-User ausfüllen
-              </Button>
-            </div>
-
-            <p className="text-xs text-muted-foreground text-center">
-              This is a demo. Authentication is disabled.
-            </p>
           </form>
         </CardContent>
       </Card>

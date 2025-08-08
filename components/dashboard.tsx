@@ -35,12 +35,11 @@ function formatLogLine(log: ActivityLog) {
   const ts = log.createdAt ? format(new Date(log.createdAt), "d.M.yyyy, HH:mm:ss") : ""
   const sys = log.systemName ?? "Unknown"
   let metaPreview = ""
-  if (log.meta && Array.isArray(log.meta.entries)) {
-    const preview = log.meta.entries.slice(0, 3).map((e: { name: string; value: string }) => {
-      const val = e.value
-      return `${e.name}=${val}`
+  if (log.meta && Array.isArray(log.meta.versions)) {
+    const preview = log.meta.versions.slice(0, 3).map((e: { variable: string; version: string }) => {
+      return `${e.variable}=${e.version}`
     })
-    const more = log.meta.entries.length > 3 ? ` +${log.meta.entries.length - 3} more` : ""
+    const more = log.meta.versions.length > 3 ? ` +${log.meta.versions.length - 3} more` : ""
     metaPreview = `${preview.join(", ")}${more}`
   }
   return `[${ts}] ${sys}: ${metaPreview}`

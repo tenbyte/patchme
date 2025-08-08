@@ -78,11 +78,8 @@ async function main() {
         data: {
           systemId: activity.systemId,
           action: "demo",
-          meta: JSON.stringify({
-            systemName: activity.systemName,
-            timestamp: activity.timestamp,
-            entries: activity.entries,
-          }),
+          createdAt: new Date(activity.createdAt),
+          meta: JSON.stringify(activity.meta),
         },
       });
     }

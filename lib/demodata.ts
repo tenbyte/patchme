@@ -73,22 +73,26 @@ export const demoActivity = [
     id: "1",
     systemId: "1",
     systemName: "Nextcloud",
-    timestamp: new Date().toISOString(),
-    entries: [
-      { name: "PHP_Version", value: "8.3.0" },
-      { name: "MariaDB_Version", value: "10.11.2" },
-      { name: "NC_Version", value: "29.0.1" }
-    ]
+    createdAt: new Date().toISOString(),
+    meta: {
+      versions: [
+        { variable: "PHP_Version", version: "8.3.0" },
+        { variable: "MariaDB_Version", version: "10.11.2" },
+        { variable: "NC_Version", version: "29.0.1" }
+      ]
+    }
   },
   {
     id: "2",
     systemId: "2",
     systemName: "Plesk",
-    timestamp: new Date().toISOString(),
-    entries: [
-      { name: "PHP_Version", value: "8.3.0" },
-      { name: "MariaDB_Version", value: "10.11.2" }
-    ]
+    createdAt: new Date().toISOString(),
+    meta: {
+      versions: [
+        { variable: "PHP_Version", version: "8.3.0" },
+        { variable: "MariaDB_Version", version: "10.11.2" }
+      ]
+    }
   }
 ];
 
