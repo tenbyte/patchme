@@ -1,11 +1,11 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useMemo, useState, useTransition, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Pencil, Trash2, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import { useRouter } from "next/navigation"
 import {
   Dialog,
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import type { Baseline } from "@/lib/types"
+import toast from "react-hot-toast"
 
 async function apiCreateBaseline({ name, variable, minVersion }: { name: string; variable: string; minVersion: string }) {
   const res = await fetch("/api/baselines", {
@@ -24,7 +25,10 @@ async function apiCreateBaseline({ name, variable, minVersion }: { name: string;
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, variable, minVersion }),
   })
-  if (!res.ok) throw new Error("Failed to create baseline")
+  if (!res.ok) {
+    const data = await res.json()
+    throw new Error(data.error || "Failed to create baseline")
+  }
   return res.json()
 }
 
@@ -38,10 +42,20 @@ async function apiUpdateBaseline({ id, name, variable, minVersion }: { id: strin
   return res.json()
 }
 
-async function apiDeleteBaseline(id: string) {
-  const res = await fetch(`/api/baselines?id=${id}`, { method: "DELETE" })
-  if (!res.ok) throw new Error("Failed to delete baseline")
-  return res.json()
+const apiDeleteBaseline = async (id: string) => {
+  try {
+    const res = await fetch(`/api/baselines?id=${id}`, { method: "DELETE" })
+    if (!res.ok) {
+      const data = await res.json()
+      toast.error(data.error || "Failed to delete baseline", { id: "delete-baseline-toast" })
+      throw new Error(data.error || "Failed to delete baseline")
+    }
+    toast.success("Baseline deleted", { id: "delete-baseline-toast" })
+    return res.json()
+  } catch (e: any) {
+    toast.error(e.message || "Failed to delete baseline", { id: "delete-baseline-toast" })
+    throw e
+  }
 }
 
 export default function BaselinesTable({ baselines = [] as Baseline[] }) {
@@ -52,6 +66,10 @@ export default function BaselinesTable({ baselines = [] as Baseline[] }) {
   const [variable, setVariable] = useState("")
   const [minVersion, setMinVersion] = useState("")
   const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+  const [variableStatus, setVariableStatus] = useState<'idle'|'checking'|'ok'|'exists'|null>(null)
+  const variableTimeout = useRef<NodeJS.Timeout | null>(null)
+  const lastCheckedValue = useRef<string>("")
   const router = useRouter()
 
   const filtered = useMemo(() => {
@@ -82,16 +100,46 @@ export default function BaselinesTable({ baselines = [] as Baseline[] }) {
     setOpen(true)
   }
 
+  const checkVariable = (value: string) => {
+    if (variableTimeout.current) clearTimeout(variableTimeout.current)
+    setVariableStatus('checking')
+    variableTimeout.current = setTimeout(async () => {
+      // Nur prüfen, wenn sich der Wert seit dem letzten Check geändert hat
+      if (lastCheckedValue.current === value) return
+      lastCheckedValue.current = value
+      try {
+        const res = await fetch(`/api/baselines?variable=${encodeURIComponent(value)}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.exists) setVariableStatus('exists')
+          else setVariableStatus('ok')
+        } else {
+          setVariableStatus(null)
+        }
+      } catch {
+        setVariableStatus(null)
+      }
+    }, 500)
+  }
+
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     startTransition(async () => {
-      if (editItem) {
-        await apiUpdateBaseline({ id: editItem.id, name, variable, minVersion })
-      } else {
-        await apiCreateBaseline({ name, variable, minVersion })
+      try {
+        if (editItem) {
+          await apiUpdateBaseline({ id: editItem.id, name, variable, minVersion })
+          toast.success("Baseline updated", { id: "create-baseline-toast" })
+        } else {
+          await apiCreateBaseline({ name, variable, minVersion })
+          toast.success("Baseline created", { id: "create-baseline-toast" })
+        }
+        setOpen(false)
+        router.refresh()
+      } catch (err: any) {
+        setError(err.message)
+        toast.error(err.message, { id: "create-baseline-toast" })
       }
-      setOpen(false)
-      router.refresh()
     })
   }
 
@@ -165,7 +213,22 @@ export default function BaselinesTable({ baselines = [] as Baseline[] }) {
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="bvar">Variable</Label>
-              <Input id="bvar" value={variable} onChange={(e) => setVariable(e.target.value)} required />
+              <div className="flex items-center gap-2">
+                <Input
+                  id="bvar"
+                  value={variable}
+                  onChange={e => {
+                    setVariable(e.target.value)
+                    if (e.target.value) checkVariable(e.target.value)
+                    else setVariableStatus(null)
+                  }}
+                  required
+                  className="flex-1"
+                />
+                {variableStatus === 'checking' && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                {variableStatus === 'ok' && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                {variableStatus === 'exists' && <XCircle className="w-4 h-4 text-red-500" />}
+              </div>
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="bmin">Min version</Label>
@@ -174,9 +237,11 @@ export default function BaselinesTable({ baselines = [] as Baseline[] }) {
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={isPending}>
+                {isPending ? <span className="animate-spin mr-2 inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" /> : null}
                 {isPending ? "Saving..." : "Save"}
               </Button>
             </div>
+            {error && <div className="text-red-500 text-xs mt-2">{error}</div>}
           </form>
         </DialogContent>
       </Dialog>

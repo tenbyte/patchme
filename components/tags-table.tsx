@@ -1,15 +1,16 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useMemo, useState, useTransition, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Pencil, Trash2, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import type { Tag } from "@/lib/types"
+import toast from "react-hot-toast"
 
 
 async function apiCreateTag({ name }: { name: string }) {
@@ -18,7 +19,11 @@ async function apiCreateTag({ name }: { name: string }) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name }),
   })
-  if (!res.ok) throw new Error("Failed to create tag")
+  if (!res.ok) {
+    const data = await res.json()
+    toast.error(data.error || "Failed to create tag", { id: "create-tag-toast" })
+    throw new Error(data.error || "Failed to create tag")
+  }
   return res.json()
 }
 
@@ -43,6 +48,9 @@ export default function TagsTable({ tags = [] as Tag[] }) {
   const [open, setOpen] = useState(false)
   const [editItem, setEditItem] = useState<Tag | null>(null)
   const [name, setName] = useState("")
+  const [tagStatus, setTagStatus] = useState<'idle'|'checking'|'ok'|'exists'|null>(null)
+  const tagTimeout = useRef<NodeJS.Timeout | null>(null)
+  const lastCheckedTag = useRef<string>("")
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
@@ -63,16 +71,41 @@ export default function TagsTable({ tags = [] as Tag[] }) {
     setOpen(true)
   }
 
+  const checkTag = (value: string) => {
+    if (tagTimeout.current) clearTimeout(tagTimeout.current)
+    setTagStatus('checking')
+    tagTimeout.current = setTimeout(async () => {
+      if (lastCheckedTag.current === value) return
+      lastCheckedTag.current = value
+      try {
+        const res = await fetch(`/api/tags?name=${encodeURIComponent(value)}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.exists) setTagStatus('exists')
+          else setTagStatus('ok')
+        } else {
+          setTagStatus(null)
+        }
+      } catch {
+        setTagStatus(null)
+      }
+    }, 500)
+  }
+
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     startTransition(async () => {
-      if (editItem) {
-        await apiUpdateTag({ id: editItem.id, name })
-      } else {
-        await apiCreateTag({ name })
+      try {
+        if (editItem) {
+          await apiUpdateTag({ id: editItem.id, name })
+        } else {
+          await apiCreateTag({ name })
+        }
+        setOpen(false)
+        router.refresh()
+      } catch (err: any) {
+        // Fehler wird bereits im Toast angezeigt
       }
-      setOpen(false)
-      router.refresh()
     })
   }
 
@@ -136,7 +169,22 @@ export default function TagsTable({ tags = [] as Tag[] }) {
           <form onSubmit={onSubmit} className="space-y-3">
             <div className="grid gap-1.5">
               <Label htmlFor="tname">Name</Label>
-              <Input id="tname" value={name} onChange={(e) => setName(e.target.value)} required />
+              <div className="flex items-center gap-2">
+                <Input
+                  id="tname"
+                  value={name}
+                  onChange={e => {
+                    setName(e.target.value)
+                    if (e.target.value) checkTag(e.target.value)
+                    else setTagStatus(null)
+                  }}
+                  required
+                  className="flex-1"
+                />
+                {tagStatus === 'checking' && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                {tagStatus === 'ok' && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                {tagStatus === 'exists' && <XCircle className="w-4 h-4 text-red-500" />}
+              </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>

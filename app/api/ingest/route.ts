@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-import { ingestEntries } from "@/lib/store"
 
 export async function POST(req: Request) {
   try {

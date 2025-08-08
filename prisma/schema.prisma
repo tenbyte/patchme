@@ -43,7 +43,7 @@ model Tag {
 model Baseline {
   id         String   @id @default(uuid())
   name       String
-  variable   String
+  variable   String   @unique
   minVersion String
   systems    System[] @relation("SystemBaselines")
   baselineValues SystemBaselineValue[]
