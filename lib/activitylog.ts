@@ -27,3 +27,19 @@ export async function getActivityLogs(limit = 100) {
     createdAt: log.createdAt.toISOString(),
   }))
 }
+
+export async function pruneActivityLog() {
+  const count = await prisma.activityLog.count()
+  if (count > 250) {
+    const toDelete = await prisma.activityLog.findMany({
+      orderBy: { createdAt: "asc" },
+      skip: 250,
+      select: { id: true },
+    })
+    if (toDelete.length > 0) {
+      await prisma.activityLog.deleteMany({
+        where: { id: { in: toDelete.map(e => e.id) } }
+      })
+    }
+  }
+}
