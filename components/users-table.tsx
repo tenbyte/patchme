@@ -1,22 +1,47 @@
 "use client"
-
 import { useMemo, useState, useTransition } from "react"
-import type { User } from "@/lib/store"
+import type { User } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Pencil, Trash2, Search, Wand2 } from 'lucide-react'
-import { createUser, deleteUser, updateUser } from "@/app/server-actions"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useRouter } from "next/navigation"
 
 function generatePassword(length = 16) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*()-_=+[]{}"
   const arr = new Uint32Array(length)
   crypto.getRandomValues(arr)
   return Array.from(arr, (n) => chars[n % chars.length]).join("")
+}
+
+async function apiCreateUser({ name, email, password, role }: { name: string; email: string; password: string; role: "admin" | "user" }) {
+  const res = await fetch("/api/users", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, password, role }),
+  })
+  if (!res.ok) throw new Error("Failed to create user")
+  return res.json()
+}
+
+async function apiUpdateUser({ id, name, email, password, role }: { id: string; name: string; email: string; password?: string; role: "admin" | "user" }) {
+  const res = await fetch(`/api/users?id=${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, password, role }),
+  })
+  if (!res.ok) throw new Error("Failed to update user")
+  return res.json()
+}
+
+async function apiDeleteUser(id: string) {
+  const res = await fetch(`/api/users?id=${id}`, { method: "DELETE" })
+  if (!res.ok) throw new Error("Failed to delete user")
+  return res.json()
 }
 
 export default function UsersTable({ users = [] as User[] }) {
@@ -28,6 +53,7 @@ export default function UsersTable({ users = [] as User[] }) {
   const [password, setPassword] = useState("")
   const [role, setRole] = useState<"admin" | "user">("user")
   const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
@@ -59,7 +85,7 @@ export default function UsersTable({ users = [] as User[] }) {
     e.preventDefault()
     startTransition(async () => {
       if (editItem) {
-        await updateUser({
+        await apiUpdateUser({
           id: editItem.id,
           name,
           email,
@@ -67,9 +93,10 @@ export default function UsersTable({ users = [] as User[] }) {
           role,
         })
       } else {
-        await createUser({ name, email, password, role })
+        await apiCreateUser({ name, email, password, role })
       }
       setOpen(false)
+      router.refresh()
     })
   }
 
@@ -115,12 +142,10 @@ export default function UsersTable({ users = [] as User[] }) {
                     <Pencil className="w-4 h-4 mr-1" />
                     Edit
                   </Button>
-                  <form className="inline" action={deleteUser.bind(null, u.id)}>
-                    <Button variant="ghost" size="sm">
-                      <Trash2 className="w-4 h-4 mr-1" />
-                      Delete
-                    </Button>
-                  </form>
+                  <Button variant="ghost" size="sm" onClick={async () => { await apiDeleteUser(u.id); router.refresh() }}>
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Delete
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

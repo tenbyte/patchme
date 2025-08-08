@@ -12,9 +12,6 @@ import {
   updateBaselineById,
   updateSystemById,
   updateTagById,
-  addUser,
-  updateUserById,
-  deleteUserById,
 } from "@/lib/store"
 
 // Systems, baselines, tags
@@ -73,15 +70,4 @@ export async function mockInboundActivity() {
   await mockActivity()
 }
 
-// Users (Settings)
-export async function createUser(input: { name: string; email: string; password: string; role: "admin" | "user" }) {
-  await addUser(input)
-}
-
-export async function updateUser(input: { id: string; name: string; email: string; password?: string; role: "admin" | "user" }) {
-  await updateUserById(input)
-}
-
-export async function deleteUser(id: string) {
-  await deleteUserById(id)
-}
+// Users (Settings) entfernt, da jetzt eigene API-Route genutzt wird

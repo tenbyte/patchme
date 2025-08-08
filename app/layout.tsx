@@ -18,7 +18,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const cookieStore = cookies()
-  const sessionToken = (await cookieStore).get("session")?.value
+  const sessionToken = (await cookieStore).get("pmsession")?.value
   let userName = "Guest"
   let userRole = "user"
   if (sessionToken) {

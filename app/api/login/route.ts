@@ -27,9 +27,9 @@ export async function POST(req: NextRequest) {
       expiresAt,
     }
   })
-  
+
   const res = NextResponse.json({ ok: true })
-  res.cookies.set("session", sessionToken, {
+  res.cookies.set("pmsession", sessionToken, {
     httpOnly: true,
     secure: true,
     sameSite: "lax",

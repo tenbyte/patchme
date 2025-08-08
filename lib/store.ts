@@ -8,11 +8,6 @@ function generateApiKey() {
   return `pm_${s}`
 }
 
-function generateSessionToken(userId: string) {
-  // Include userId in the token so we can recover sessions across reloads (demo only)
-  return `uid:${userId}:${crypto.randomUUID()}`
-}
-
 // Core types
 export type SystemVarValue = string | string[]
 
@@ -52,13 +47,7 @@ export type Counts = {
   warnings: number
 }
 
-export type User = {
-  id: string
-  name: string
-  email: string
-  password: string // NOTE: plain text for demo only
-  role: "admin" | "user"
-}
+// User und Session Typen und Logik entfernt
 
 type StoreShape = {
   systems: System[]
@@ -66,8 +55,6 @@ type StoreShape = {
   activity: ActivityLog[]
   tags: Tag[]
   globals: GlobalVar[]
-  users: User[]
-  sessions: Record<string, string> // token -> userId
 }
 
 const g = globalThis as unknown as { __PATCHME_STORE__?: StoreShape }
@@ -128,83 +115,11 @@ if (!g.__PATCHME_STORE__) {
       { id: crypto.randomUUID(), name: "Plesk" },
       { id: crypto.randomUUID(), name: "Kernel" },
     ],
-    users: [
-      {
-        id: "1",
-        name: "Admin",
-        email: "admin@patchme.local",
-        password: "admin123",
-        role: "admin",
-      },
-      {
-        id: "2",
-        name: "Demo User",
-        email: "user@patchme.local",
-        password: "demo123",
-        role: "user",
-      },
-    ],
-    sessions: {},
   }
 }
 
 function store() {
   return g.__PATCHME_STORE__!
-}
-
-// Users
-export async function getUsers() {
-  return store().users.sort((a, b) => a.name.localeCompare(b.name))
-}
-export async function addUser(input: { name: string; email: string; password: string; role: "admin" | "user" }) {
-  const exists = store().users.find((u) => u.email.toLowerCase() === input.email.toLowerCase())
-  if (exists) throw new Error("Email already exists")
-  const u: User = { id: crypto.randomUUID(), ...input }
-  store().users.push(u)
-  return u
-}
-export async function updateUserById(input: { id: string; name: string; email: string; password?: string; role: "admin" | "user" }) {
-  const u = store().users.find((x) => x.id === input.id)
-  if (!u) throw new Error("User not found")
-  const conflict = store().users.find((x) => x.email.toLowerCase() === input.email.toLowerCase() && x.id !== input.id)
-  if (conflict) throw new Error("Email already exists")
-  u.name = input.name
-  u.email = input.email
-  u.role = input.role
-  if (typeof input.password === "string" && input.password.length > 0) {
-    u.password = input.password
-  }
-}
-export async function deleteUserById(id: string) {
-  store().users = store().users.filter((x) => x.id !== id)
-}
-export async function findUserByEmail(email: string) {
-  return store().users.find((u) => u.email.toLowerCase() === email.toLowerCase())
-}
-export async function getUserById(id: string) {
-  return store().users.find((u) => u.id === id)
-}
-
-// Sessions (unused in demo but kept)
-export async function createSession(userId: string) {
-  const token = generateSessionToken(userId)
-  store().sessions[token] = userId
-  return token
-}
-export async function deleteSession(token: string) {
-  delete store().sessions[token]
-}
-export async function getUserForSession(token: string) {
-  const fromMap = store().sessions[token]
-  if (fromMap) return getUserById(fromMap)
-  if (token.startsWith("uid:")) {
-    const parts = token.split(":")
-    const userId = parts[1]
-    if (userId) {
-      return getUserById(userId)
-    }
-  }
-  return undefined
 }
 
 // Queries

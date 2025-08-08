@@ -1,16 +1,17 @@
 import UsersTable from "@/components/users-table"
-import { getUsers, getUserForSession } from "@/lib/store"
 import { cookies } from "next/headers"
+import { getUserForSession, getUsers } from "@/lib/users"
+import type { User } from "@/lib/types"
 
 export const dynamic = "force-dynamic"
 
 export default async function SettingsPage() {
-  // User aus Session holen
-  const cookieStore = cookies()
-  const sessionToken = (await cookieStore).get("session")?.value
-  let user = null
+
+  const cookieStore = await cookies()
+  const sessionToken = cookieStore.get("pmsession")?.value
+  let user: User | undefined
   if (sessionToken) {
-    user = await getUserForSession(sessionToken)
+    user = await getUserForSession(sessionToken) as User | undefined
   }
   if (!user || user.role !== "admin") {
     return <main className="min-h-screen flex items-center justify-center text-xl">Nicht autorisiert</main>

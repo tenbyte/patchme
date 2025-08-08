@@ -5,7 +5,7 @@ export function middleware(req: NextRequest) {
   if (publicPaths.some((p) => req.nextUrl.pathname.startsWith(p))) {
     return NextResponse.next()
   }
-  const sessionToken = req.cookies.get("session")?.value
+  const sessionToken = req.cookies.get("pmsession")?.value
   if (!sessionToken) {
     return NextResponse.redirect(new URL("/login", req.url))
   }
