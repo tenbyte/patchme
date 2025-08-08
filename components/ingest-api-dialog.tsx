@@ -13,14 +13,17 @@ export default function IngestApiDialog({
   trigger: React.ReactNode
 }) {
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const entries = system.baselines.map((b) => ({ variable: b.variable, minVersion: b.minVersion }))
-  const schema = `POST /api/ingest
-  Content-Type: application/json {
-    systemId: "${system.id}",
-    baselines: [${system.baselines.map((b) => `"${b.variable}"`).join(", ")}]
-  }`
+  const entries = system.baselines.map((b) => ({
+    variable: b.variable,
+    minVersion: b.minVersion,
+    current: system.baselineValues?.find((bv) => bv.baselineId === b.id)?.value || null
+  }))
+  const schema = `POST /api/ingest\nContent-Type: application/json {\n  key: \"${system.apiKey}\",\n  versions: [\n${entries.map(e => `    { variable: \"${e.variable}\", version: \"${e.current || '<version>'}\" }`).join(',\n')}\n  ]\n}`
 
-  const curlBody = { key: system.apiKey, entries }
+  const curlBody = {
+    key: system.apiKey,
+    versions: entries.map(e => ({ variable: e.variable, version: e.current || "<version>" }))
+  }
   const curl = `curl -X POST ${baseUrl}/api/ingest \\
   -H "Content-Type: application/json" \\
   -d '${JSON.stringify(curlBody, null, 2)}'`

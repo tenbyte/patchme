@@ -2,12 +2,12 @@ import { PrismaClient } from "@/lib/generated/prisma/client"
 
 const prisma = new PrismaClient()
 
-export async function logSystemActivity({ systemId, action, meta }: { systemId: string; action: string; meta?: any }) {
+export async function logSystemActivity({ systemId, action, meta }: { systemId: string, action: string, meta?: any }) {
   await prisma.activityLog.create({
     data: {
       systemId,
       action,
-      meta: meta ? JSON.stringify(meta) : null,
+      meta: meta ? JSON.stringify(meta) : undefined,
     },
   })
 }

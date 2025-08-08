@@ -76,5 +76,7 @@ model SystemBaselineValue {
   systemId   String
   baseline   Baseline @relation(fields: [baselineId], references: [id])
   baselineId String
-  value      String 
+  value      String
+
+  @@unique([systemId, baselineId])
 }

@@ -21,7 +21,12 @@ export function compareVersions(a: string, b: string): number {
 
 export function getStatusForSystem(s: System, baselines: { variable: string; minVersion: string }[]): "Ok" | "Warning" {
   for (const b of baselines) {
-    if (!s.baselines.some((bl) => bl.variable === b.variable)) continue
+    const baseline = s.baselines.find((bl) => bl.variable === b.variable)
+    if (!baseline) continue
+    const val = s.baselineValues?.find((bv) => bv.baselineId === baseline.id)?.value
+    if (!val || compareVersions(val, b.minVersion) < 0) {
+      return "Warning"
+    }
   }
   return "Ok"
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,7 @@ import CreateSystemDialog from "./create-system-dialog"
 import CreateBaselineDialog from "./create-baseline-dialog"
 import { format } from "date-fns"
 import type { System, Baseline, ActivityLog, Tag } from "@/lib/types"
+import { useMemo } from "react"
 
 
 const defaultProps: Required<Props> = {
@@ -46,13 +47,21 @@ function formatLogLine(log: ActivityLog) {
 }
 
 export default function Dashboard(p: Props) {
-  const { systems, baselines, activity, tags, counts } = { ...defaultProps, ...p }
+  const { systems, baselines, activity, tags, counts: countsProp } = { ...defaultProps, ...p }
 
   const [query, setQuery] = useState("")
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [openCreate, setOpenCreate] = useState(false)
   const [openBaseline, setOpenBaseline] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [dashboardCounts, setDashboardCounts] = useState(countsProp)
+
+  useEffect(() => {
+    fetch("/api/systems/counts")
+      .then(r => r.json())
+      .then(setDashboardCounts)
+      .catch(() => setDashboardCounts(countsProp))
+  }, [])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -139,7 +148,7 @@ export default function Dashboard(p: Props) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{counts.total}</div>
+            <div className="text-3xl font-bold">{dashboardCounts.total}</div>
           </CardContent>
         </Card>
         <Card>
@@ -150,7 +159,7 @@ export default function Dashboard(p: Props) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{counts.ok}</div>
+            <div className="text-3xl font-bold">{dashboardCounts.ok}</div>
           </CardContent>
         </Card>
         <Card>
@@ -161,7 +170,7 @@ export default function Dashboard(p: Props) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{counts.warnings}</div>
+            <div className="text-3xl font-bold">{dashboardCounts.warnings}</div>
           </CardContent>
         </Card>
       </div>
@@ -185,8 +194,8 @@ export default function Dashboard(p: Props) {
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">Baselines: {baselines.length}</Badge>
             <Badge variant="secondary">Tags: {tags.length}</Badge>
-            <Badge variant="secondary">OK: {counts.ok}</Badge>
-            <Badge variant="secondary">Warnings: {counts.warnings}</Badge>
+            <Badge variant="secondary">OK: {dashboardCounts.ok}</Badge>
+            <Badge variant="secondary">Warnings: {dashboardCounts.warnings}</Badge>
           </div>
         </CardContent>
       </Card>

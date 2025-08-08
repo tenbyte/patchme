@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
 export function middleware(req: NextRequest) {
-  const publicPaths = ["/login", "/api/login"]
+  const publicPaths = ["/login", "/api/login", "/api/ingest"]
   if (publicPaths.some((p) => req.nextUrl.pathname.startsWith(p))) {
     return NextResponse.next()
   }
@@ -13,5 +13,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next|public|api/login|login).*)"],
+  matcher: ["/((?!_next|public|api/login|api/ingest|login).*)"],
 }
