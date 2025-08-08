@@ -4,7 +4,7 @@ import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import { ThemeProvider } from "@/components/theme-provider"
 import { cookies } from "next/headers"
-import { PrismaClient } from "@/lib/generated/prisma/client"
+import jwt from "jsonwebtoken"
 import TopBar from "@/components/topbar"
 import ToasterProvider from "@/components/toaster-provider"
 
@@ -19,19 +19,15 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const cookieStore = cookies()
-  const sessionToken = (await cookieStore).get("pmsession")?.value
+  const token = (await cookieStore).get("pmsession")?.value
   let userName = "Guest"
   let userRole = "user"
-  if (sessionToken) {
-    const prisma = new PrismaClient()
-    const session = await prisma.session.findUnique({
-      where: { token: sessionToken },
-      include: { user: true },
-    })
-    if (session && session.user) {
-      userName = session.user.name
-      userRole = session.user.role
-    }
+  if (token) {
+    try {
+      const payload: any = jwt.verify(token, process.env.JWT_SECRET || "changeme-supersecret")
+      userName = payload.name
+      userRole = payload.role
+    } catch {}
   }
   return (
     <html lang="en" suppressHydrationWarning>

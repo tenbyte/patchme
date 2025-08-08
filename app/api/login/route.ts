@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { PrismaClient } from "@/lib/generated/prisma/client"
 import bcrypt from "bcryptjs"
+import jwt from "jsonwebtoken"
 
 const prisma = new PrismaClient()
+const JWT_SECRET = process.env.JWT_SECRET || "changeme-supersecret"
 
 export async function POST(req: NextRequest) {
   const { email, password } = await req.json()
@@ -18,18 +20,17 @@ export async function POST(req: NextRequest) {
   if (!valid) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
   }
-  const sessionToken = crypto.randomUUID()
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7)
-  await prisma.session.create({
-    data: {
-      userId: user.id,
-      token: sessionToken,
-      expiresAt,
-    }
-  })
+
+  // JWT erzeugen
+  const payload = {
+    userId: user.id,
+    name: user.name,
+    role: user.role,
+  }
+  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" })
 
   const res = NextResponse.json({ ok: true })
-  res.cookies.set("pmsession", sessionToken, {
+  res.cookies.set("pmsession", token, {
     httpOnly: true,
     secure: true,
     sameSite: "lax",
