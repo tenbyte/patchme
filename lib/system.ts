@@ -61,7 +61,7 @@ export async function createSystem({ name, hostname, tags, baselines, apiKey, ba
   tags: string[]
   baselines: string[]
   apiKey: string
-  baselineVersions: { baselineId: string, value: string }[]
+  baselineVersions?: { baselineId: string, value: string }[]
 }) {
   return prisma.system.create({
     data: {
@@ -71,7 +71,7 @@ export async function createSystem({ name, hostname, tags, baselines, apiKey, ba
       tags: { connect: tags.map(id => ({ id })) },
       baselines: { connect: baselines.map(id => ({ id })) },
       baselineValues: {
-        create: baselineVersions.map((bv) => ({
+        create: (baselineVersions ?? []).map((bv) => ({
           baseline: { connect: { id: bv.baselineId } },
           value: bv.value,
         }))

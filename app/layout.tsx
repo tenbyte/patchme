@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { cookies } from "next/headers"
 import { PrismaClient } from "@/lib/generated/prisma/client"
 import TopBar from "@/components/topbar"
+import ToasterProvider from "@/components/toaster-provider"
 
 export const metadata: Metadata = {
   title: 'PatchMe',
@@ -47,6 +48,7 @@ html {
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <TopBar userName={userName} userRole={userRole} />
           {children}
+          <ToasterProvider />
         </ThemeProvider>
       </body>
     </html>

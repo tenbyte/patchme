@@ -14,12 +14,29 @@ import IngestApiDialog from "./ingest-api-dialog"
 import { useRouter } from "next/navigation"
 import type { System } from "@/lib/types"
 import { getStatusForSystem } from "@/lib/utils-versions"
+import toast from "react-hot-toast"
 
 
-async function apiDeleteSystem(id: string) {
-  const res = await fetch(`/api/systems?id=${id}`, { method: "DELETE" })
-  if (!res.ok) throw new Error("Failed to delete system")
-  return res.json()
+const apiDeleteSystem = async (id: string) => {
+  try {
+    const res = await fetch(`/api/systems?id=${id}`, { method: "DELETE" })
+    if (!res.ok) {
+      const data = await res.json()
+      if (!document.getElementById("delete-system-toast")) {
+        toast.error(data.error || "Failed to delete system", { id: "delete-system-toast" })
+      }
+      throw new Error(data.error || "Failed to delete system")
+    }
+    if (!document.getElementById("delete-system-toast")) {
+      toast.success("System deleted", { id: "delete-system-toast" })
+    }
+    return res.json()
+  } catch (e: any) {
+    if (!document.getElementById("delete-system-toast")) {
+      toast.error(e.message || "Failed to delete system", { id: "delete-system-toast" })
+    }
+    throw e
+  }
 }
 
 export default function SystemsTable({ systems = [] as System[] }) {
