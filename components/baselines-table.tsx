@@ -1,15 +1,48 @@
 "use client"
 
 import { useMemo, useState, useTransition } from "react"
-import type { Baseline } from "@/lib/store"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Pencil, Trash2, Search } from 'lucide-react'
-import { createBaseline, deleteBaseline, updateBaseline } from "@/app/server-actions"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useRouter } from "next/navigation"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import type { Baseline } from "@/lib/types"
+
+async function apiCreateBaseline({ name, variable, minVersion }: { name: string; variable: string; minVersion: string }) {
+  const res = await fetch("/api/baselines", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, variable, minVersion }),
+  })
+  if (!res.ok) throw new Error("Failed to create baseline")
+  return res.json()
+}
+
+async function apiUpdateBaseline({ id, name, variable, minVersion }: { id: string; name: string; variable: string; minVersion: string }) {
+  const res = await fetch(`/api/baselines?id=${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, variable, minVersion }),
+  })
+  if (!res.ok) throw new Error("Failed to update baseline")
+  return res.json()
+}
+
+async function apiDeleteBaseline(id: string) {
+  const res = await fetch(`/api/baselines?id=${id}`, { method: "DELETE" })
+  if (!res.ok) throw new Error("Failed to delete baseline")
+  return res.json()
+}
 
 export default function BaselinesTable({ baselines = [] as Baseline[] }) {
   const [q, setQ] = useState("")
@@ -19,6 +52,7 @@ export default function BaselinesTable({ baselines = [] as Baseline[] }) {
   const [variable, setVariable] = useState("")
   const [minVersion, setMinVersion] = useState("")
   const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
@@ -52,11 +86,12 @@ export default function BaselinesTable({ baselines = [] as Baseline[] }) {
     e.preventDefault()
     startTransition(async () => {
       if (editItem) {
-        await updateBaseline({ id: editItem.id, name, variable, minVersion })
+        await apiUpdateBaseline({ id: editItem.id, name, variable, minVersion })
       } else {
-        await createBaseline({ name, variable, minVersion })
+        await apiCreateBaseline({ name, variable, minVersion })
       }
       setOpen(false)
+      router.refresh()
     })
   }
 
@@ -97,12 +132,17 @@ export default function BaselinesTable({ baselines = [] as Baseline[] }) {
                     <Pencil className="w-4 h-4 mr-1" />
                     Edit
                   </Button>
-                  <form className="inline" action={deleteBaseline.bind(null, b.id)}>
-                    <Button variant="ghost" size="sm">
-                      <Trash2 className="w-4 h-4 mr-1" />
-                      Delete
-                    </Button>
-                  </form>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
+                      await apiDeleteBaseline(b.id)
+                      router.refresh()
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Delete
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

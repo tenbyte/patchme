@@ -1,15 +1,42 @@
 "use client"
 
 import { useMemo, useState, useTransition } from "react"
-import type { Tag } from "@/lib/store"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Pencil, Trash2, Search } from 'lucide-react'
-import { createTag, deleteTag, updateTag } from "@/app/server-actions"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import type { Tag } from "@/lib/types"
+
+
+async function apiCreateTag({ name }: { name: string }) {
+  const res = await fetch("/api/tags", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  })
+  if (!res.ok) throw new Error("Failed to create tag")
+  return res.json()
+}
+
+async function apiUpdateTag({ id, name }: { id: string; name: string }) {
+  const res = await fetch(`/api/tags?id=${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  })
+  if (!res.ok) throw new Error("Failed to update tag")
+  return res.json()
+}
+
+async function apiDeleteTag(id: string) {
+  const res = await fetch(`/api/tags?id=${id}`, { method: "DELETE" })
+  if (!res.ok) throw new Error("Failed to delete tag")
+  return res.json()
+}
 
 export default function TagsTable({ tags = [] as Tag[] }) {
   const [q, setQ] = useState("")
@@ -17,6 +44,7 @@ export default function TagsTable({ tags = [] as Tag[] }) {
   const [editItem, setEditItem] = useState<Tag | null>(null)
   const [name, setName] = useState("")
   const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
@@ -39,11 +67,12 @@ export default function TagsTable({ tags = [] as Tag[] }) {
     e.preventDefault()
     startTransition(async () => {
       if (editItem) {
-        await updateTag({ id: editItem.id, name })
+        await apiUpdateTag({ id: editItem.id, name })
       } else {
-        await createTag({ name })
+        await apiCreateTag({ name })
       }
       setOpen(false)
+      router.refresh()
     })
   }
 
@@ -80,12 +109,17 @@ export default function TagsTable({ tags = [] as Tag[] }) {
                     <Pencil className="w-4 h-4 mr-1" />
                     Edit
                   </Button>
-                  <form className="inline" action={deleteTag.bind(null, t.id)}>
-                    <Button variant="ghost" size="sm">
-                      <Trash2 className="w-4 h-4 mr-1" />
-                      Delete
-                    </Button>
-                  </form>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
+                      await apiDeleteTag(t.id)
+                      router.refresh()
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Delete
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

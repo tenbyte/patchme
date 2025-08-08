@@ -1,3 +1,5 @@
+import type { System } from "@/lib/types"
+
 export function compareVersions(a: string, b: string): number {
   const parse = (v: string) =>
     v
@@ -15,4 +17,11 @@ export function compareVersions(a: string, b: string): number {
     if (na < nb) return -1
   }
   return 0
+}
+
+export function getStatusForSystem(s: System, baselines: { variable: string; minVersion: string }[]): "Ok" | "Warning" {
+  for (const b of baselines) {
+    if (!s.baselines.some((bl) => bl.variable === b.variable)) continue
+  }
+  return "Ok"
 }

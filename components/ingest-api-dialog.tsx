@@ -3,16 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Command } from 'lucide-react'
-import type { System, SystemVarValue } from "@/lib/store"
-
-function exampleForVar(value: SystemVarValue | undefined, key: string) {
-  if (Array.isArray(value)) {
-    const ex = value.length ? value : ["example 1", "example 2"]
-    return { name: key, values: ex }
-  }
-  const ex = typeof value === "string" && value ? value : "1.0.0"
-  return { name: key, value: ex }
-}
+import type { System } from "@/lib/types"
 
 export default function IngestApiDialog({
   system,
@@ -23,26 +14,16 @@ export default function IngestApiDialog({
   trigger: React.ReactNode
   baseUrl?: string
 }) {
-  const entries = system.allowedVariables.map((k) => exampleForVar(system.variables[k], k))
+  // allowedVariables und variables gibt es nicht mehr im System!
+  // Wir zeigen stattdessen die Baselines an
+  const entries = system.baselines.map((b) => ({ variable: b.variable, minVersion: b.minVersion }))
 
+  // Beispiel für das Schema (angepasst)
   const schema = `POST /api/ingest
-  Content-Type: application/json
-
-  {
-    "key": "pm_XXXXXXX",
-    "entries": [
-${entries
-  .map((e) =>
-    "values" in e
-      ? `      {"name": "${e.name}", "values": ${JSON.stringify(e.values)}}`
-      : `      {"name": "${e.name}", "value": "${e.value}"}`
-  )
-  .join(",\n")}
-    ]
-  }
-
-  Response:
-  { "ok": true }`
+  Content-Type: application/json {
+    systemId: "${system.id}",
+    baselines: [${system.baselines.map((b) => `"${b.variable}"`).join(", ")}]
+  }`
 
   const curlBody = { key: system.apiKey, entries }
   const curl = `curl -X POST ${baseUrl}/api/ingest \\

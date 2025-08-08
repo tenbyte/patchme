@@ -7,8 +7,8 @@ export const dynamic = "force-dynamic"
 
 export default async function SettingsPage() {
 
-  const cookieStore = await cookies()
-  const sessionToken = cookieStore.get("pmsession")?.value
+  const cookieStore = cookies()
+  const sessionToken = (await cookieStore).get("pmsession")?.value
   let user: User | undefined
   if (sessionToken) {
     user = await getUserForSession(sessionToken) as User | undefined

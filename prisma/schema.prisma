@@ -15,13 +15,13 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   name      String
-  email     String   @unique
+  email     String    @unique
   password  String
-  role      String   @default("user")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role      String    @default("user")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   sessions  Session[]
 }
 
@@ -32,4 +32,38 @@ model Session {
   token     String   @unique
   createdAt DateTime @default(now())
   expiresAt DateTime
+}
+
+model Tag {
+  id      String   @id @default(uuid())
+  name    String   @unique
+  systems System[] @relation("SystemTags")
+}
+
+model Baseline {
+  id         String   @id @default(uuid())
+  name       String
+  variable   String
+  minVersion String
+  systems    System[] @relation("SystemBaselines")
+}
+
+model System {
+  id          String        @id @default(uuid())
+  name        String
+  hostname    String
+  tags        Tag[]         @relation("SystemTags")
+  apiKey      String
+  lastSeen    DateTime?
+  baselines   Baseline[]    @relation("SystemBaselines")
+  ActivityLog ActivityLog[]
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  system    System   @relation(fields: [systemId], references: [id])
+  systemId  String
+  action    String
+  meta      String?  @db.LongText 
+  createdAt DateTime @default(now())
 }

@@ -1,5 +1,5 @@
 import BaselinesTable from "@/components/baselines-table"
-import { getBaselines } from "@/lib/store"
+import { getBaselines } from "@/lib/baseline"
 
 export const dynamic = "force-dynamic"
 

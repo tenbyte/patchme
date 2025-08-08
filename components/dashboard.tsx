@@ -7,20 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Search, ShieldCheck, AlertTriangle, Server, FilterX, Activity } from 'lucide-react'
-import type { Baseline, Counts, System, ActivityLog } from "@/lib/store"
 import SystemCard from "./system-card"
 import CreateSystemDialog from "./create-system-dialog"
 import CreateBaselineDialog from "./create-baseline-dialog"
-import { mockInboundActivity } from "@/app/server-actions"
 import { format } from "date-fns"
+import type { System, Baseline, ActivityLog, Tag } from "@/lib/types"
 
-type Props = {
-  systems?: System[]
-  baselines?: Baseline[]
-  activity?: ActivityLog[]
-  tags?: string[]
-  counts?: Counts
-}
 
 const defaultProps: Required<Props> = {
   systems: [],
@@ -30,15 +22,27 @@ const defaultProps: Required<Props> = {
   counts: { total: 0, ok: 0, warnings: 0 },
 }
 
+type Props = {
+  systems?: System[]
+  baselines?: Baseline[]
+  activity?: ActivityLog[]
+  tags?: Tag[]
+  counts?: { total: number; ok: number; warnings: number }
+}
+
 function formatLogLine(log: ActivityLog) {
-  const ts = format(new Date(log.timestamp), "d.M.yyyy, HH:mm:ss")
+  const ts = log.createdAt ? format(new Date(log.createdAt), "d.M.yyyy, HH:mm:ss") : ""
   const sys = log.systemName ?? "Unknown"
-  const preview = log.entries.slice(0, 3).map((e) => {
-    const val = e.value ?? (Array.isArray(e.values) ? `${e.values.length} values` : "null")
-    return `${e.name}=${val}`
-  })
-  const more = log.entries.length > 3 ? ` +${log.entries.length - 3} more` : ""
-  return `[${ts}] ${sys}: ${preview.join(", ")}${more}`
+  let metaPreview = ""
+  if (log.meta && Array.isArray(log.meta.entries)) {
+    const preview = log.meta.entries.slice(0, 3).map((e: { name: string; value: string }) => {
+      const val = e.value
+      return `${e.name}=${val}`
+    })
+    const more = log.meta.entries.length > 3 ? ` +${log.meta.entries.length - 3} more` : ""
+    metaPreview = `${preview.join(", ")}${more}`
+  }
+  return `[${ts}] ${sys}: ${metaPreview}`
 }
 
 export default function Dashboard(p: Props) {
@@ -52,16 +56,19 @@ export default function Dashboard(p: Props) {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return systems.filter((s) => {
+    return systems.filter((s: System) => {
       const matchesQuery =
         !q ||
         s.name.toLowerCase().includes(q) ||
         s.hostname.toLowerCase().includes(q) ||
-        Object.entries(s.variables).some(([k, v]) => {
-          if (typeof v === "string") return `${k} ${v}`.toLowerCase().includes(q)
-          return `${k} ${v.join(" ")}`.toLowerCase().includes(q)
-        })
-      const matchesTags = selectedTags.length === 0 || selectedTags.every((t) => s.tags.includes(t))
+        s.baselines.some((b: Baseline) =>
+          b.name.toLowerCase().includes(q) ||
+          b.variable.toLowerCase().includes(q) ||
+          b.minVersion.toLowerCase().includes(q)
+        )
+      const matchesTags =
+        selectedTags.length === 0 ||
+        selectedTags.every((id) => s.tags.some((tag: Tag) => tag.id === id))
       return matchesQuery && matchesTags
     })
   }, [systems, query, selectedTags])
@@ -102,17 +109,17 @@ export default function Dashboard(p: Props) {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm text-muted-foreground">Tag filters:</span>
-        {tags.map((t) => (
+        {tags.map((t: Tag) => (
           <button
-            key={t}
-            onClick={() => toggleTag(t)}
+            key={t.id}
+            onClick={() => toggleTag(t.id)}
             className={[
               "rounded-full px-3 py-1 text-sm border transition-colors",
-              selectedTags.includes(t) ? "bg-foreground text-background" : "bg-muted hover:bg-muted/80",
+              selectedTags.includes(t.id) ? "bg-foreground text-background" : "bg-muted hover:bg-muted/80",
             ].join(" ")}
-            aria-pressed={selectedTags.includes(t)}
+            aria-pressed={selectedTags.includes(t.id)}
           >
-            {t}
+            {t.name}
           </button>
         ))}
         {selectedTags.length > 0 && (
@@ -169,7 +176,7 @@ export default function Dashboard(p: Props) {
             <div className="text-sm text-muted-foreground">No systems found.</div>
           ) : (
             <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))]">
-              {filtered.map((s) => (
+              {filtered.map((s: System) => (
                 <SystemCard key={s.id} system={s} />
               ))}
             </div>
@@ -191,14 +198,6 @@ export default function Dashboard(p: Props) {
             <Activity className="w-4 h-4" />
             Inbound Activity
           </CardTitle>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={isPending}
-            onClick={() => startTransition(async () => { await mockInboundActivity() })}
-          >
-            Mock inbound
-          </Button>
         </CardHeader>
         <CardContent>
           <div className="text-sm rounded-md border bg-muted/50 p-3 max-h-[40vh] overflow-y-auto">
@@ -208,7 +207,7 @@ export default function Dashboard(p: Props) {
               </div>
             ) : (
               <ul className="space-y-1">
-                {activity.slice(0, 100).map((log) => (
+                {activity.slice(0, 100).map((log: ActivityLog) => (
                   <li key={log.id} className="whitespace-pre-wrap">
                     {formatLogLine(log)}
                   </li>

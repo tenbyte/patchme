@@ -1,5 +1,5 @@
 import TagsTable from "@/components/tags-table"
-import { getTags } from "@/lib/store"
+import { getTags } from "@/lib/tags"
 
 export const dynamic = "force-dynamic"
 

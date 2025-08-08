@@ -1,27 +1,13 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { System } from "@/lib/store"
 import { cn } from "@/lib/utils"
 import { Globe } from 'lucide-react'
 import Link from "next/link"
-import { getStatusForSystem } from "@/lib/store"
 import { format } from "date-fns"
+import { getStatusForSystem } from "@/lib/utils-versions"
+import type { System } from "@/lib/types"
 
-type Props = {
-  system?: System
-}
-
-const defaultSystem: System = {
-  id: "demo",
-  name: "Example",
-  hostname: "https://example.com",
-  tags: ["prod"],
-  apiKey: "pm_DEMOXXX",
-  lastSeen: undefined,
-  variables: { PHP_Version: "8.3.0" },
-  allowedVariables: ["PHP_Version"],
-}
 
 function StatusDot({ status }: { status: "Ok" | "Warning" }) {
   const color = status === "Ok" ? "bg-emerald-500" : "bg-amber-500"
@@ -31,16 +17,12 @@ function StatusDot({ status }: { status: "Ok" | "Warning" }) {
 const pillVersion = "rounded-full border px-2.5 py-0.5 text-[11px] bg-muted"
 const pillTag = "rounded-full border px-2 py-0.5 text-[11px] bg-background"
 
-export default function SystemCard({ system = defaultSystem }: Props) {
-  const status = getStatusForSystem(system)
-
-  const entries = Object.entries(system.variables)
-  const versions = entries.filter(([k]) => /version/i.test(k))
-  const others = entries.filter(([k]) => !/version/i.test(k))
+export default function SystemCard({ system }: { system: System }) {
+  const status = getStatusForSystem(system, system.baselines)
 
   const maxBadges = 3
-  const versionShown = versions.slice(0, maxBadges)
-  const versionMore = versions.length - versionShown.length
+  const versionShown = system.baselines.slice(0, maxBadges)
+  const versionMore = system.baselines.length - versionShown.length
 
   return (
     <Card className="bg-card/60">
@@ -53,22 +35,21 @@ export default function SystemCard({ system = defaultSystem }: Props) {
               target="_blank"
               className="text-[11px] leading-none text-muted-foreground inline-flex items-center gap-1 hover:underline"
             >
-            <div className="flex items-center gap-1 py-3">
-              <Globe className="w-3 h-3" />
-              <span className="truncate max-w-[200px]">{system.hostname}</span>
-              
-            </div>
+              <div className="flex items-center gap-1 py-3">
+                <Globe className="w-3 h-3" />
+                <span className="truncate max-w-[200px]">{system.hostname}</span>
+              </div>
             </Link>
-              <div className="text-[11px] leading-none text-muted-foreground">
+            <div className="text-[11px] leading-none text-muted-foreground">
               {system.lastSeen ? `Last seen ${format(new Date(system.lastSeen), "d.M.yyyy, HH:mm:ss")}` : "Never seen"}
             </div>
             <div className="flex flex-wrap gap-1 mt-2">
-            {system.tags.map((t) => (
-              <span key={t} className={pillTag}>
-                {t}
-              </span>
-            ))}
-          </div>
+              {system.tags.map((t) => (
+                <span key={t.id} className={pillTag}>
+                  {t.name}
+                </span>
+              ))}
+            </div>
           </div>
           <div className="text-[11px] text-muted-foreground flex items-center gap-2 leading-none">
             <StatusDot status={status} />
@@ -80,26 +61,16 @@ export default function SystemCard({ system = defaultSystem }: Props) {
       <CardContent className="px-3 pb-3 pt-0">
         <div className="flex flex-wrap gap-1.5">
           {versionShown.length === 0 ? (
-            <span className={pillVersion}>No versions</span>
+            <span className={pillVersion}>No baselines</span>
           ) : (
-            versionShown.map(([k, v]) => (
-              <span key={k} className={pillVersion}>
-                {k.replace(/_/g, " ")}: {Array.isArray(v) ? v.join(", ") : v}
+            versionShown.map((b) => (
+              <span key={b.id} className={pillVersion}>
+                {b.name}: {b.variable} ≥ {b.minVersion}
               </span>
             ))
           )}
           {versionMore > 0 && <span className={pillVersion}>+{versionMore} more</span>}
         </div>
-
-        {others.length > 0 && (
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {others.slice(0, 2).map(([k, v]) => (
-              <span key={k} className={pillVersion}>
-                {k.replace(/_/g, " ")}: {Array.isArray(v) ? v.join(", ") : v}
-              </span>
-            ))}
-          </div>
-        )}
       </CardContent>
     </Card>
   )

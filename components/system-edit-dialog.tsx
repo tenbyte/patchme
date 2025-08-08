@@ -5,10 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import type { System } from "@/lib/store"
 import { VariableMultiSelect } from "./variable-multiselect"
-import { getGlobalVars, getTagNames } from "@/lib/store"
-import { updateSystem } from "@/app/server-actions"
+import type { System } from "@/lib/types"
+
 
 export default function SystemEditDialog({
   system,
@@ -20,28 +19,33 @@ export default function SystemEditDialog({
   const [open, setOpen] = useState(false)
   const [name, setName] = useState(system.name)
   const [hostname, setHostname] = useState(system.hostname)
-  const [globals, setGlobals] = useState<string[]>(system.allowedVariables)
-  const [tags, setTags] = useState<string[]>(system.tags)
-  const [options, setOptions] = useState<string[]>([])
-  const [tagOptions, setTagOptions] = useState<string[]>([])
+  const [selectedBaselines, setSelectedBaselines] = useState<string[]>(system.baselines.map((b) => b.id))
+  const [selectedTags, setSelectedTags] = useState<string[]>(system.tags.map((t) => t.id))
+  const [baselineOptions, setBaselineOptions] = useState<{ id: string; name: string }[]>([])
+  const [tagOptions, setTagOptions] = useState<{ id: string; name: string }[]>([])
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
-    Promise.all([getGlobalVars(), getTagNames()]).then(([g, t]) => {
-      setOptions(g.map((x) => x.name))
-      setTagOptions(t)
-    })
+    fetch("/api/tags")
+      .then((res) => res.json())
+      .then((tags) => setTagOptions(tags))
+    fetch("/api/baselines")
+      .then((res) => res.json())
+      .then((baselines) => setBaselineOptions(baselines))
   }, [])
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     startTransition(async () => {
-      await updateSystem({
-        id: system.id,
-        name,
-        hostname,
-        tags,
-        allowedVariables: globals,
+      await fetch(`/api/systems?id=${system.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          hostname,
+          tags: selectedTags,
+          baselines: selectedBaselines,
+        }),
       })
       setOpen(false)
     })
@@ -68,21 +72,29 @@ export default function SystemEditDialog({
           </div>
 
           <VariableMultiSelect
-            options={tagOptions}
-            value={tags}
-            onChange={setTags}
+            options={tagOptions.map((t) => t.name)}
+            value={selectedTags.map(
+              id => tagOptions.find(t => t.id === id)?.name || id
+            )}
+            onChange={names => setSelectedTags(
+              names.map(name => tagOptions.find(t => t.name === name)?.id || name)
+            )}
             placeholder="Select tags…"
             label="Tags"
             creatable={false}
           />
 
           <VariableMultiSelect
-            options={options}
-            value={globals}
-            onChange={setGlobals}
+            options={baselineOptions.map((b) => b.name)}
+            value={selectedBaselines.map(
+              id => baselineOptions.find(b => b.id === id)?.name || id
+            )}
+            onChange={names => setSelectedBaselines(
+              names.map(name => baselineOptions.find(b => b.name === name)?.id || name)
+            )}
             creatable={false}
-            placeholder="Select global variables…"
-            label="Global variables"
+            placeholder="Select baselines…"
+            label="Baselines"
           />
 
           <DialogFooter>

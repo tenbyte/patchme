@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Copy, RefreshCw } from 'lucide-react'
 import { useState, useTransition } from "react"
-import { rotateSystemApiKey } from "@/app/server-actions"
 
 export default function SystemApiKeyDialog({
   systemId,
@@ -24,8 +23,15 @@ export default function SystemApiKeyDialog({
   const onRotate = () => {
     if (!confirm("Rotate API key? The old key becomes invalid immediately.")) return
     startTransition(async () => {
-      const next = await rotateSystemApiKey(systemId)
-      setApiKey(next)
+      const res = await fetch(`/api/systems?id=${systemId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rotateKey: true }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setApiKey(data.apiKey)
+      }
     })
   }
 

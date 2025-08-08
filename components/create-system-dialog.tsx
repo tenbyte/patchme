@@ -1,50 +1,46 @@
 "use client"
 
-import { useEffect, useMemo, useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createSystem } from "@/app/server-actions"
-import { getGlobalVars, getTagNames } from "@/lib/store"
 import { VariableMultiSelect } from "./variable-multiselect"
 
-type Props = {
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
-}
-
-export default function CreateSystemDialog({ open = false, onOpenChange = () => {} }: Props) {
+export default function CreateSystemDialog({ open = false, onOpenChange = () => {} }: { open?: boolean; onOpenChange?: (open: boolean) => void }) {
   const [name, setName] = useState("")
   const [hostname, setHostname] = useState("")
   const [selectedGlobals, setSelectedGlobals] = useState<string[]>([])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [isPending, startTransition] = useTransition()
-
-  const [globalOptions, setGlobalOptions] = useState<string[]>([])
-  const [tagOptions, setTagOptions] = useState<string[]>([])
+  const [globalOptions, setGlobalOptions] = useState<{ id: string; name: string }[]>([])
+  const [tagOptions, setTagOptions] = useState<{ id: string; name: string }[]>([])
+  const [baselineOptions, setBaselineOptions] = useState<{ id: string; name: string }[]>([])
 
   useEffect(() => {
-    Promise.all([getGlobalVars(), getTagNames()]).then(([globals, tagNames]) => {
-      setGlobalOptions(globals.map((g) => g.name))
-      setTagOptions(tagNames)
-    })
+    fetch("/api/tags")
+      .then((res) => res.json())
+      .then((tags) => setTagOptions(tags))
+    fetch("/api/baselines")
+      .then((res) => res.json())
+      .then((baselines) => setBaselineOptions(baselines))
   }, [])
 
-  const canSubmit = useMemo(() => {
-    if (!name || !hostname) return false
-    if (selectedGlobals.length === 0) return false
-    return true
-  }, [name, hostname, selectedGlobals])
+  const canSubmit = name && hostname && selectedGlobals.length > 0
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     startTransition(async () => {
-      await createSystem({
-        name,
-        hostname,
-        tags: selectedTags,
-        selectedGlobalVars: selectedGlobals,
+      await fetch("/api/systems", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          hostname,
+          tags: selectedTags, // IDs!
+          baselines: selectedGlobals, // IDs!
+          apiKey: "pm_" + Math.random().toString(36).slice(2, 10).toUpperCase(),
+        }),
       })
       onOpenChange(false)
       setName("")
@@ -74,20 +70,28 @@ export default function CreateSystemDialog({ open = false, onOpenChange = () => 
           </div>
 
           <VariableMultiSelect
-            options={tagOptions}
-            value={selectedTags}
-            onChange={setSelectedTags}
+            options={tagOptions.map((t) => t.name)}
+            value={selectedTags.map(
+              id => tagOptions.find(t => t.id === id)?.name || id
+            )}
+            onChange={names => setSelectedTags(
+              names.map(name => tagOptions.find(t => t.name === name)?.id || name)
+            )}
             placeholder="Select tags…"
             label="Tags"
             creatable={false}
           />
 
           <VariableMultiSelect
-            options={globalOptions}
-            value={selectedGlobals}
-            onChange={setSelectedGlobals}
-            placeholder="Select global variables…"
-            label="Global variables"
+            options={baselineOptions.map((b) => b.name)}
+            value={selectedGlobals.map(
+              id => baselineOptions.find(b => b.id === id)?.name || id
+            )}
+            onChange={names => setSelectedGlobals(
+              names.map(name => baselineOptions.find(b => b.name === name)?.id || name)
+            )}
+            placeholder="Select baselines…"
+            label="Baselines"
             creatable={false}
           />
 

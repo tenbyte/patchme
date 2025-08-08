@@ -1,8 +1,6 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import type { System } from "@/lib/store"
-import { getStatusForSystem } from "@/lib/store"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,13 +9,23 @@ import { Plus, Key, Trash2, Search, Pencil, Command } from 'lucide-react'
 import CreateSystemDialog from "./create-system-dialog"
 import SystemApiKeyDialog from "./system-api-key-dialog"
 import SystemEditDialog from "./system-edit-dialog"
-import { deleteSystem } from "@/app/server-actions"
 import { cn } from "@/lib/utils"
 import IngestApiDialog from "./ingest-api-dialog"
+import { useRouter } from "next/navigation"
+import type { System } from "@/lib/types"
+import { getStatusForSystem } from "@/lib/utils-versions"
+
+
+async function apiDeleteSystem(id: string) {
+  const res = await fetch(`/api/systems?id=${id}`, { method: "DELETE" })
+  if (!res.ok) throw new Error("Failed to delete system")
+  return res.json()
+}
 
 export default function SystemsTable({ systems = [] as System[] }) {
   const [q, setQ] = useState("")
   const [openCreate, setOpenCreate] = useState(false)
+  const router = useRouter()
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
@@ -26,7 +34,7 @@ export default function SystemsTable({ systems = [] as System[] }) {
       return (
         sys.name.toLowerCase().includes(s) ||
         sys.hostname.toLowerCase().includes(s) ||
-        sys.tags.some((t) => t.toLowerCase().includes(s))
+        sys.tags.some((t) => t.name.toLowerCase().includes(s))
       )
     })
   }, [q, systems])
@@ -61,7 +69,7 @@ export default function SystemsTable({ systems = [] as System[] }) {
           </TableHeader>
           <TableBody>
             {filtered.map((s) => {
-              const status = getStatusForSystem(s)
+              const status = getStatusForSystem(s, s.baselines)
               const badgeClass =
                 status === "Ok"
                   ? "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30"
@@ -72,13 +80,13 @@ export default function SystemsTable({ systems = [] as System[] }) {
                   <TableCell className="text-muted-foreground">{s.hostname}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {s.tags.map((t) => (
-                        <span key={t} className="rounded-full bg-muted border px-2 py-0.5 text-xs">{t}</span>
+                      {s.tags.map((t: any) => (
+                        <span key={t.id} className="rounded-full bg-muted border px-2 py-0.5 text-xs">{t.name}</span>
                       ))}
                     </div>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {s.allowedVariables.join(", ")}
+                    {s.baselines.map((b: any) => b.variable).join(", ")}
                   </TableCell>
                   <TableCell>
                     <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold", badgeClass)}>
@@ -118,12 +126,10 @@ export default function SystemsTable({ systems = [] as System[] }) {
                         }
                       />
                       {/* Delete */}
-                      <form action={deleteSystem.bind(null, s.id)}>
-                        <Button variant="ghost" size="sm" className="h-8">
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Delete
-                        </Button>
-                      </form>
+                      <Button variant="ghost" size="sm" className="h-8" onClick={async () => { await apiDeleteSystem(s.id); router.refresh() }}>
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Delete
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

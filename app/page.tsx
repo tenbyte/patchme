@@ -1,13 +1,16 @@
 import Dashboard from "@/components/dashboard"
-import { getActivity, getBaselines, getSystems, getSystemStatusCounts, getTagNames } from "@/lib/store"
+import { getSystems, getSystemStatusCounts } from "@/lib/system"
+import { getBaselines } from "@/lib/baseline"
+import { getTags } from "@/lib/tags"
+import { getActivityLogs } from "@/lib/activitylog"
 
 export const dynamic = "force-dynamic"
 
 export default async function Page() {
   const systems = await getSystems()
   const baselines = await getBaselines()
-  const activity = await getActivity()
-  const tags = await getTagNames()
+  const activity = await getActivityLogs()
+  const tags = await getTags()
   const counts = await getSystemStatusCounts()
 
   return (
