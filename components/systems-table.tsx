@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -25,11 +25,15 @@ async function apiDeleteSystem(id: string) {
 export default function SystemsTable({ systems = [] as System[] }) {
   const [q, setQ] = useState("")
   const [openCreate, setOpenCreate] = useState(false)
-  const router = useRouter()
+  const [localSystems, setLocalSystems] = useState<System[]>(systems)
+
+  useEffect(() => {
+    setLocalSystems(systems)
+  }, [systems])
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
-    return systems.filter((sys) => {
+    return localSystems.filter((sys) => {
       if (!s) return true
       return (
         sys.name.toLowerCase().includes(s) ||
@@ -37,7 +41,9 @@ export default function SystemsTable({ systems = [] as System[] }) {
         sys.tags.some((t) => t.name.toLowerCase().includes(s))
       )
     })
-  }, [q, systems])
+  }, [q, localSystems])
+
+  const router = useRouter()
 
   return (
     <Card className="p-4 space-y-4">
@@ -62,7 +68,7 @@ export default function SystemsTable({ systems = [] as System[] }) {
               <TableHead>Name</TableHead>
               <TableHead>Hostname</TableHead>
               <TableHead>Tags</TableHead>
-              <TableHead>Global variables</TableHead>
+              <TableHead>Versions</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -85,8 +91,21 @@ export default function SystemsTable({ systems = [] as System[] }) {
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {s.baselines.map((b: any) => b.variable).join(", ")}
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1.5">
+                      {s.baselines.length === 0 ? (
+                        <span className="rounded-full border px-2.5 py-0.5 text-[11px] bg-muted">No baselines</span>
+                      ) : (
+                        s.baselines.map((b) => {
+                          const val = s.baselineValues?.find((bv) => bv.baselineId === b.id)?.value
+                          return (
+                            <span key={b.id} className="rounded-full border px-2.5 py-0.5 text-[11px] bg-muted">
+                              {b.name}: {val ? val : <span className="text-muted-foreground">(no value)</span>}
+                            </span>
+                          )
+                        })
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold", badgeClass)}>
