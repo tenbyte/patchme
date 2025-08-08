@@ -91,3 +91,16 @@ export const demoActivity = [
     ]
   }
 ];
+
+
+export const demoSystemBaselineValues = [
+  // Nextcloud
+  { id: "sbv1", systemId: "1", baselineId: "1", value: "8.3.0" }, // PHP
+  { id: "sbv2", systemId: "1", baselineId: "2", value: "10.11.2" }, // MariaDB
+  { id: "sbv3", systemId: "1", baselineId: "3", value: "29.0.1" }, // NC
+  // Plesk
+  { id: "sbv4", systemId: "2", baselineId: "1", value: "8.2.0" }, // PHP
+  { id: "sbv5", systemId: "2", baselineId: "2", value: "10.11.1" }, // MariaDB
+  // Linux
+  { id: "sbv6", systemId: "3", baselineId: "2", value: "10.11.0" }, // MariaDB
+]

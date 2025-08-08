@@ -46,6 +46,7 @@ model Baseline {
   variable   String
   minVersion String
   systems    System[] @relation("SystemBaselines")
+  baselineValues SystemBaselineValue[]
 }
 
 model System {
@@ -57,6 +58,7 @@ model System {
   lastSeen    DateTime?
   baselines   Baseline[]    @relation("SystemBaselines")
   ActivityLog ActivityLog[]
+  baselineValues SystemBaselineValue[]
 }
 
 model ActivityLog {
@@ -66,4 +68,13 @@ model ActivityLog {
   action    String
   meta      String?  @db.LongText 
   createdAt DateTime @default(now())
+}
+
+model SystemBaselineValue {
+  id         String   @id @default(uuid())
+  system     System   @relation(fields: [systemId], references: [id])
+  systemId   String
+  baseline   Baseline @relation(fields: [baselineId], references: [id])
+  baselineId String
+  value      String 
 }

@@ -20,9 +20,10 @@ const pillTag = "rounded-full border px-2 py-0.5 text-[11px] bg-background"
 export default function SystemCard({ system }: { system: System }) {
   const status = getStatusForSystem(system, system.baselines)
 
+  // Zeige die Baselines mit IST-Version (aus baselineValues) an
   const maxBadges = 3
-  const versionShown = system.baselines.slice(0, maxBadges)
-  const versionMore = system.baselines.length - versionShown.length
+  const shown = (system.baselines || []).slice(0, maxBadges)
+  const versionMore = (system.baselines?.length || 0) - shown.length
 
   return (
     <Card className="bg-card/60">
@@ -60,14 +61,17 @@ export default function SystemCard({ system }: { system: System }) {
 
       <CardContent className="px-3 pb-3 pt-0">
         <div className="flex flex-wrap gap-1.5">
-          {versionShown.length === 0 ? (
+          {shown.length === 0 ? (
             <span className={pillVersion}>No baselines</span>
           ) : (
-            versionShown.map((b) => (
-              <span key={b.id} className={pillVersion}>
-                {b.name}: {b.variable} ≥ {b.minVersion}
-              </span>
-            ))
+            shown.map((b) => {
+              const val = system.baselineValues?.find((bv) => bv.baselineId === b.id)?.value
+              return (
+                <span key={b.id} className={pillVersion}>
+                  {b.name}: {val ? val : <span className="text-muted-foreground">(no value)</span>} (≥ {b.minVersion})
+                </span>
+              )
+            })
           )}
           {versionMore > 0 && <span className={pillVersion}>+{versionMore} more</span>}
         </div>

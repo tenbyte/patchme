@@ -9,6 +9,18 @@ export type User = {
   role: UserRole
 }
 
+export type SystemBaselineValue = {
+  id: string
+  baselineId: string
+  value: string
+  baseline: {
+    id: string
+    name: string
+    variable: string
+    minVersion: string
+  }
+}
+
 export type System = {
   id: string
   name: string
@@ -17,6 +29,7 @@ export type System = {
   apiKey: string
   lastSeen?: string | null
   baselines: { id: string; name: string; variable: string; minVersion: string }[]
+  baselineValues?: SystemBaselineValue[]
 }
 
 export type Tag = {

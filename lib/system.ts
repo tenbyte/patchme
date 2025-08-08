@@ -5,13 +5,29 @@ const prisma = new PrismaClient()
 
 export async function getSystems(): Promise<System[]> {
   const systems = await prisma.system.findMany({
-    include: { tags: true, baselines: true },
+    include: {
+      tags: true,
+      baselines: true,
+      baselineValues: {
+        include: { baseline: true }
+      }
+    },
     orderBy: { name: "asc" },
   })
-  // lastSeen zu string konvertieren
   return systems.map((s) => ({
     ...s,
     lastSeen: s.lastSeen ? s.lastSeen.toISOString() : null,
+    baselineValues: s.baselineValues.map((bv) => ({
+      id: bv.id,
+      baselineId: bv.baselineId,
+      value: bv.value,
+      baseline: {
+        id: bv.baseline.id,
+        name: bv.baseline.name,
+        variable: bv.baseline.variable,
+        minVersion: bv.baseline.minVersion,
+      }
+    }))
   }))
 }
 
@@ -39,12 +55,13 @@ export async function getActivity() {
   }))
 }
 
-export async function createSystem({ name, hostname, tags, baselines, apiKey }: {
+export async function createSystem({ name, hostname, tags, baselines, apiKey, baselineVersions }: {
   name: string
   hostname: string
   tags: string[]
   baselines: string[]
   apiKey: string
+  baselineVersions: { baselineId: string, value: string }[]
 }) {
   return prisma.system.create({
     data: {
@@ -53,18 +70,27 @@ export async function createSystem({ name, hostname, tags, baselines, apiKey }: 
       apiKey,
       tags: { connect: tags.map(id => ({ id })) },
       baselines: { connect: baselines.map(id => ({ id })) },
+      baselineValues: {
+        create: baselineVersions.map((bv) => ({
+          baseline: { connect: { id: bv.baselineId } },
+          value: bv.value,
+        }))
+      }
     },
-    include: { tags: true, baselines: true },
+    include: { tags: true, baselines: true, baselineValues: { include: { baseline: true } } },
   })
 }
 
-export async function updateSystemById({ id, name, hostname, tags, baselines }: {
+export async function updateSystemById({ id, name, hostname, tags, baselines, baselineVersions }: {
   id: string
   name: string
   hostname: string
   tags: string[]
   baselines: string[]
+  baselineVersions: { baselineId: string, value: string }[]
 }) {
+  // Bestehende BaselineValues löschen und neu anlegen (einfachste Variante)
+  await prisma.systemBaselineValue.deleteMany({ where: { systemId: id } })
   return prisma.system.update({
     where: { id },
     data: {
@@ -72,8 +98,14 @@ export async function updateSystemById({ id, name, hostname, tags, baselines }: 
       hostname,
       tags: { set: tags.map(id => ({ id })) },
       baselines: { set: baselines.map(id => ({ id })) },
+      baselineValues: {
+        create: baselineVersions.map((bv) => ({
+          baseline: { connect: { id: bv.baselineId } },
+          value: bv.value,
+        }))
+      }
     },
-    include: { tags: true, baselines: true },
+    include: { tags: true, baselines: true, baselineValues: { include: { baseline: true } } },
   })
 }
 

@@ -1,5 +1,5 @@
 import { PrismaClient } from "../lib/generated/prisma";
-import { users, demoTags, demoBaselines, demoSystems, demoActivity} from "../lib/demodata";
+import { users, demoTags, demoBaselines, demoSystems, demoActivity, demoSystemBaselineValues} from "../lib/demodata";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -88,6 +88,22 @@ async function main() {
     }
     console.log("Demo-Aktivitätsprotokolle wurden erstellt");
   }
+
+  const systemBaselineValueCount = await prisma.systemBaselineValue.count();
+  if (systemBaselineValueCount === 0 && typeof demoSystemBaselineValues !== "undefined"
+  ) {
+    for (const systemBaselineValue of demoSystemBaselineValues) {
+      await prisma.systemBaselineValue.create({
+        data: {
+          system: { connect: { id: systemBaselineValue.systemId } },
+          baseline: { connect: { id: systemBaselineValue.baselineId } },
+          value: systemBaselineValue.value,
+        },
+      });
+    }
+    console.log("Demo-System-Baseline-Werte wurden erstellt");
+  }
+
 }
 
 main()

@@ -37,8 +37,8 @@ export default function CreateSystemDialog({ open = false, onOpenChange = () => 
         body: JSON.stringify({
           name,
           hostname,
-          tags: selectedTags, // IDs!
-          baselines: selectedGlobals, // IDs!
+          tags: selectedTags, 
+          baselines: selectedGlobals, 
           apiKey: "pm_" + Math.random().toString(36).slice(2, 10).toUpperCase(),
         }),
       })
