@@ -45,3 +45,4 @@ Thumbs.db
 # Miscellaneous
 *.lock
 /lib/generated/prisma
+deploy.sh
