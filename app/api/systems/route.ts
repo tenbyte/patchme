@@ -21,7 +21,7 @@ export async function PUT(req: NextRequest) {
   if (!id) return NextResponse.json({ error: "ID fehlt" }, { status: 400 })
   const data = await req.json()
   const system = await updateSystemById({ ...data, id })
-  return NextResponse.json(system)
+  return NextResponse.json({ apiKey: system.apiKey, system })
 }
 
 export async function DELETE(req: NextRequest) {

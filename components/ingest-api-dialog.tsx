@@ -8,17 +8,12 @@ import type { System } from "@/lib/types"
 export default function IngestApiDialog({
   system,
   trigger,
-  baseUrl = "https://your-app.example",
 }: {
   system: System
   trigger: React.ReactNode
-  baseUrl?: string
 }) {
-  // allowedVariables und variables gibt es nicht mehr im System!
-  // Wir zeigen stattdessen die Baselines an
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
   const entries = system.baselines.map((b) => ({ variable: b.variable, minVersion: b.minVersion }))
-
-  // Beispiel für das Schema (angepasst)
   const schema = `POST /api/ingest
   Content-Type: application/json {
     systemId: "${system.id}",
@@ -36,8 +31,9 @@ export default function IngestApiDialog({
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Command className="w-4 h-4" /> Ingest API
-            <span className="ml-auto text-xs text-muted-foreground">{system.name}</span>
+            <Command className="w-4 h-4" />
+            Ingest API
+            <span className="text-xs text-muted-foreground ml-3">{system.name}</span>
           </DialogTitle>
         </DialogHeader>
         <Tabs defaultValue="schema" className="w-full">

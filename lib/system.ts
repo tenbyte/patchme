@@ -81,32 +81,39 @@ export async function createSystem({ name, hostname, tags, baselines, apiKey, ba
   })
 }
 
-export async function updateSystemById({ id, name, hostname, tags, baselines, baselineVersions }: {
+export async function updateSystemById({ id, name, hostname, tags, baselines, baselineVersions, rotateKey }: {
   id: string
-  name: string
-  hostname: string
-  tags: string[]
-  baselines: string[]
-  baselineVersions: { baselineId: string, value: string }[]
+  name?: string
+  hostname?: string
+  tags?: string[]
+  baselines?: string[]
+  baselineVersions?: { baselineId: string, value: string }[]
+  rotateKey?: boolean
 }) {
-  // Bestehende BaselineValues löschen und neu anlegen (einfachste Variante)
-  await prisma.systemBaselineValue.deleteMany({ where: { systemId: id } })
-  return prisma.system.update({
+  const updateData: any = {}
+  if (typeof name !== "undefined") updateData.name = name
+  if (typeof hostname !== "undefined") updateData.hostname = hostname
+  if (tags) updateData.tags = { set: tags.map(id => ({ id })) }
+  if (baselines) updateData.baselines = { set: baselines.map(id => ({ id })) }
+  if (rotateKey) {
+    updateData.apiKey = "pm_" + Math.random().toString(36).slice(2, 10).toUpperCase()
+  }
+  // BaselineValues wie gehabt
+  if (typeof baselineVersions !== "undefined") {
+    await prisma.systemBaselineValue.deleteMany({ where: { systemId: id } })
+    updateData.baselineValues = {
+      create: baselineVersions.map((bv) => ({
+        baseline: { connect: { id: bv.baselineId } },
+        value: bv.value,
+      }))
+    }
+  }
+  const updated = await prisma.system.update({
     where: { id },
-    data: {
-      name,
-      hostname,
-      tags: { set: tags.map(id => ({ id })) },
-      baselines: { set: baselines.map(id => ({ id })) },
-      baselineValues: {
-        create: baselineVersions.map((bv) => ({
-          baseline: { connect: { id: bv.baselineId } },
-          value: bv.value,
-        }))
-      }
-    },
+    data: updateData,
     include: { tags: true, baselines: true, baselineValues: { include: { baseline: true } } },
   })
+  return updated
 }
 
 export async function deleteSystemById(id: string) {
