@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { jwtVerify } from "jose"
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET)
+export const COOKIE_NAME = "pmsession"
 
 export async function middleware(req: NextRequest) {
-  const token = req.cookies.get("pmsession")?.value
+  const token = req.cookies.get(COOKIE_NAME)?.value
   const isLogin = req.nextUrl.pathname === "/login"
 
   let validToken = false
@@ -24,7 +25,6 @@ export async function middleware(req: NextRequest) {
   if (!validToken && !isLogin && !req.nextUrl.pathname.startsWith("/api/")) {
     return NextResponse.redirect(new URL("/login", req.url))
   }
-
 
   return NextResponse.next()
 }

@@ -29,6 +29,7 @@ services:
       DATABASE_URL: "mysql://patchme:patchme@db:3306/patchme"
       JWT_SECRET: "your-super-secret-jwt-key-change-this-in-production"
       NODE_ENV: "production"
+      PUBLIC_URL: "${PUBLIC_URL:-http://localhost:3000}"
     depends_on:
       db:
         condition: service_healthy
