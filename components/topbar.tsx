@@ -13,6 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import Cookies from "js-cookie"
+import { COOKIE_NAME } from "@/middleware"
 
 export default function TopBar({ userName, userRole }: { userName?: string, userRole?: string }) {
   const pathname = usePathname()
@@ -29,6 +31,7 @@ export default function TopBar({ userName, userRole }: { userName?: string, user
 
   const handleLogout = async () => {
     await fetch("/api/logout", { method: "POST" })
+    Cookies.remove(COOKIE_NAME, { path: "/" })
     router.push("/login")
     router.refresh()
   }
