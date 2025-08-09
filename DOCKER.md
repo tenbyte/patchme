@@ -35,7 +35,7 @@ After starting, PatchMe is available at:
 ## Default Credentials
 
 The seed data creates a default admin user:
-- **Username**: admin@example.com
+- **Email**: admin@patchme.local
 - **Password**: admin123
 
 ⚠️ **Important**: Change the password after your first login!

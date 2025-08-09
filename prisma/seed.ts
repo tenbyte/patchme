@@ -1,38 +1,15 @@
 import { PrismaClient } from "../lib/generated/prisma";
 import bcrypt from "bcryptjs";
+import { 
+  users, 
+  demoTags, 
+  demoBaselines, 
+  demoSystems, 
+  demoActivity, 
+  demoSystemBaselineValues 
+} from "./demodata";
 
 const prisma = new PrismaClient();
-
-// Demo-Daten direkt im Seed-Skript definiert
-const users = [
-  { id: "1", name: "Admin", email: "admin@example.com", password: "admin", role: "admin" },
-  { id: "2", name: "User", email: "user@example.com", password: "user", role: "user" },
-];
-
-const demoTags = [
-  { id: "t1", name: "Tag 1" },
-  { id: "t2", name: "Tag 2" },
-];
-
-const demoBaselines = [
-  { id: "b1", name: "Baseline 1", variable: "PHP", minVersion: "8.1" },
-  { id: "b2", name: "Baseline 2", variable: "Node", minVersion: "18" },
-];
-
-const demoSystems = [
-  { id: "s1", name: "System 1", hostname: "srv01", apiKey: "key1", lastSeen: null, tags: ["t1"], baselines: ["b1"] },
-  { id: "s2", name: "System 2", hostname: "srv02", apiKey: "key2", lastSeen: null, tags: ["t2"], baselines: ["b2"] },
-];
-
-const demoActivity = [
-  { systemId: "s1", createdAt: new Date().toISOString(), meta: { foo: "bar" } },
-  { systemId: "s2", createdAt: new Date().toISOString(), meta: { foo: "baz" } },
-];
-
-const demoSystemBaselineValues = [
-  { systemId: "s1", baselineId: "b1", value: "8.1" },
-  { systemId: "s2", baselineId: "b2", value: "18" },
-];
 
 async function main() {
   const userCount = await prisma.user.count();

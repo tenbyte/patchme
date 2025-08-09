@@ -29,7 +29,7 @@ export default function LoginPage() {
       window.location.href = "/"
     } else {
       setSubmitting(false)
-      alert("Login fehlgeschlagen")
+      alert("Login failed.")
     }
   }
 

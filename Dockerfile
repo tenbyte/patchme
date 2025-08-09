@@ -52,6 +52,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/lib/generated ./lib/generated
 # Copy package.json for prisma commands
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 
+# Copy start script
+COPY --chown=nextjs:nodejs start.sh ./start.sh
+RUN chmod +x start.sh
+
 # Install only production dependencies and Prisma CLI
 RUN npm install -g prisma
 
@@ -65,6 +69,6 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:3000/api/health || exit 1
 
-# Start the application
+# Start the application with our script
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "server.js"]
+CMD ["./start.sh"]
