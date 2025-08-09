@@ -1,19 +1,17 @@
 export const users = [
   {
     id: "1",
-    username: "admin",
     role: "admin",
     name: "Admin",
     email: "admin@patchme.local",
-    password: "admin123"
+    password: "$2b$10$.Eg6WciaA2ML2Fs4XgyW7.yLOtugBdYvgLBC8f1zKUjt9Qy0.Inz6"
   },
   {
     id: "2",
-    username: "demo",
     role: "user",
     name: "Demo User",
     email: "user@patchme.local",
-    password: "demo123"
+    password: "$2b$10$A0qeTBz40j0xCEoBMwPbreiVixFh5vamqpdxI8AJBKdBasKP/OaMq"
   }
 ];
 

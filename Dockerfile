@@ -16,11 +16,14 @@ RUN npm install -g pnpm
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy source code
-COPY . .
+# Copy Prisma schema and seed files
+COPY prisma ./prisma
 
-# Generate Prisma client
+# Generate Prisma client FIRST
 RUN npx prisma generate
+
+# Copy rest of source code
+COPY . .
 
 # Build the application
 RUN pnpm build
@@ -40,24 +43,25 @@ RUN adduser --system --uid 1001 nextjs
 # Set working directory
 WORKDIR /app
 
+# Install Prisma CLI and tsx for TypeScript execution
+RUN npm install -g prisma@6.13.0 @prisma/client@6.13.0 tsx
+
 # Copy built application from builder stage
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Copy Prisma files
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+# Copy Prisma files AND the generated client
+COPY --from=builder --chown=nextjs:nodejs /app/prisma/schema.prisma ./prisma/schema.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma/demodata.ts ./prisma/demodata.ts
+COPY --from=builder --chown=nextjs:nodejs /app/prisma/seed.ts ./prisma/seed.ts
+COPY --from=builder --chown=nextjs:nodejs /app/prisma/migrations ./prisma/migrations
 COPY --from=builder --chown=nextjs:nodejs /app/lib/generated ./lib/generated
-
-# Copy package.json for prisma commands
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 
 # Copy start script
 COPY --chown=nextjs:nodejs start.sh ./start.sh
 RUN chmod +x start.sh
-
-# Install only production dependencies and Prisma CLI
-RUN npm install -g prisma
 
 # Switch to non-root user
 USER nextjs

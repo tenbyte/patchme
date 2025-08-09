@@ -1,5 +1,4 @@
 import { PrismaClient } from "../lib/generated/prisma";
-import bcrypt from "bcryptjs";
 import { 
   users, 
   demoTags, 
@@ -15,20 +14,19 @@ async function main() {
   const userCount = await prisma.user.count();
   if (userCount === 0) {
     for (const user of users) {
-      const hashedPassword = await bcrypt.hash(user.password, 10);
       await prisma.user.create({
         data: {
           id: user.id,
           name: user.name,
           email: user.email,
-          password: hashedPassword,
+          password: user.password,
           role: user.role,
         },
       });
     }
-    console.log("Benutzer wurden erstellt");
+    console.log("Users have been created");
   } else {
-    console.log("Benutzertabelle enthält bereits Daten. Überspringe User-Seed.");
+    console.log("User table already contains data. Skipping user seed.");
   }
 
   const tagCount = await prisma.tag.count();
@@ -36,9 +34,9 @@ async function main() {
     for (const tag of demoTags) {
       await prisma.tag.create({ data: { id: tag.id, name: tag.name } });
     }
-    console.log("Demo-Tags wurden erstellt");
+    console.log("Demo tags have been created");
   } else {
-    console.log("Tag-Tabelle enthält bereits Daten. Überspringe Tag-Seed.");
+    console.log("Tag table already contains data. Skipping tag seed.");
   }
 
   const baselineCount = await prisma.baseline.count();
@@ -53,7 +51,7 @@ async function main() {
         },
       });
     }
-    console.log("Demo-Baselines wurden erstellt");
+    console.log("Demo baselines have been created");
   }
 
   const systemCount = await prisma.system.count();
@@ -75,7 +73,7 @@ async function main() {
         },
       });
     }
-    console.log("Demo-Systeme wurden erstellt");
+    console.log("Demo systems have been created");
   }
 
   const activityCount = await prisma.activityLog.count();
@@ -90,7 +88,7 @@ async function main() {
         },
       });
     }
-    console.log("Demo-Aktivitätsprotokolle wurden erstellt");
+    console.log("Demo activity logs have been created");
   }
 
   const systemBaselineValueCount = await prisma.systemBaselineValue.count();
@@ -105,7 +103,7 @@ async function main() {
         },
       });
     }
-    console.log("Demo-System-Baseline-Werte wurden erstellt");
+    console.log("Demo system baseline values have been created");
   }
 
 }

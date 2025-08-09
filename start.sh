@@ -14,17 +14,27 @@ echo -e "                            |___/         ${RESET}"
 echo -e ""
 echo -e "${BOLD}${CYAN}       PATCHME - POWERED BY TENBYTE ${RESET}\n"
 
-
 echo "Waiting for database connection..."
 
 echo "Running Prisma migrations..."
 npx prisma migrate deploy
 
-echo "Generating Prisma Client..."
-npx prisma generate
-
 echo "Seeding database..."
-npx prisma db seed
+# Verwende tsx für direktes Ausführen des TypeScript-Codes
+echo "Starte Seeding mit TSX für bessere Performance..."
+if npx tsx prisma/seed.ts; then
+    echo "✅ Database seeding completed successfully"
+else
+    echo "❌ Database seeding failed - checking for errors..."
+    # Versuche einfache Lösung mit Umgebungsvariablen für Logging
+    export DEBUG="prisma:*"
+    export PRISMA_ENGINE_PROTOCOL="json"
+    if npx tsx prisma/seed.ts; then
+        echo "✅ Database seeding with DEBUG flags successful"
+    else
+        echo "❌ Seeding failed - continuing ohne demo data"
+    fi
+fi
 
 echo "Starting application..."
 exec node server.js
