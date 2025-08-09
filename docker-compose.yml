@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  db:
+    image: mysql:8.0-debian
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: patchme
+      MYSQL_USER: patchme
+      MYSQL_PASSWORD: patchme
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # PatchMe Application
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "mysql://patchme:patchme@db:3306/patchme"
+      JWT_SECRET: "your-super-secret-jwt-key-change-this-in-production"
+      NODE_ENV: "production"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Waiting for database to be ready...' &&
+        npx prisma migrate deploy &&
+        echo 'Running database seed...' &&
+        npx prisma db seed &&
+        echo 'Starting application...' &&
+        node server.js
+      "
+
+volumes:
+  mysql_data:
