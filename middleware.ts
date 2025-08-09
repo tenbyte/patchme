@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { jwtVerify } from "jose"
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "changeme-supersecret")
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET)
 
 export async function middleware(req: NextRequest) {
   const token = req.cookies.get("pmsession")?.value

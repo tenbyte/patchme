@@ -46,3 +46,4 @@ Thumbs.db
 *.lock
 /lib/generated/prisma
 deploy.sh
+dev.sh

@@ -9,7 +9,7 @@ import { cookies } from "next/headers"
 import { jwtVerify } from "jose"
 
 const prisma = new PrismaClient()
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "changeme-supersecret")
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "")
 
 // POST /api/users
 export async function POST(req: NextRequest) {

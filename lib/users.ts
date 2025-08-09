@@ -3,7 +3,7 @@ import type { User } from "@/lib/types"
 import { jwtVerify } from "jose"
 
 const prisma = new PrismaClient()
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "changeme-supersecret")
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "")
 
 export async function getUserForSession(token: string) {
   try {

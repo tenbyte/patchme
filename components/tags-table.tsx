@@ -146,8 +146,13 @@ export default function TagsTable({ tags = [] as Tag[] }) {
                     variant="ghost"
                     size="sm"
                     onClick={async () => {
-                      await apiDeleteTag(t.id)
-                      router.refresh()
+                      try {
+                        await apiDeleteTag(t.id)
+                        toast.success("Tag deleted")
+                        router.refresh()
+                      } catch (err) {
+                        toast.error("Failed to delete tag")
+                      }
                     }}
                   >
                     <Trash2 className="w-4 h-4 mr-1" />

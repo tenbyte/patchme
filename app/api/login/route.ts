@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 
 const prisma = new PrismaClient()
-const JWT_SECRET = process.env.JWT_SECRET || "changeme-supersecret"
+const JWT_SECRET = process.env.JWT_SECRET || ""
 
 export async function POST(req: NextRequest) {
   const { email, password } = await req.json()

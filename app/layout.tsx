@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken"
 import TopBar from "@/components/topbar"
 import ToasterProvider from "@/components/toaster-provider"
 
+
 export const metadata: Metadata = {
   title: 'PatchMe',
   description: 'PatchMe Dashboard'
@@ -24,7 +25,7 @@ export default async function RootLayout({
   let userRole = "user"
   if (token) {
     try {
-      const payload: any = jwt.verify(token, process.env.JWT_SECRET || "changeme-supersecret")
+      const payload: any = jwt.verify(token, process.env.JWT_SECRET || "")
       userName = payload.name
       userRole = payload.role
     } catch {}
