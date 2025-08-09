@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build && prisma generate",
-    "dev": "prisma migrate deploy && prisma db seed && next dev -H 0.0.0.0",
+    "dev": "prisma migrate deploy && prisma db seed && next dev",
     "lint": "next lint",
     "start": "next start -H 0.0.0.0",
     "seed": "tsx prisma/seed.ts",
@@ -67,6 +67,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
+    "tsx": "^4.20.3",
     "vaul": "^1.1.2",
     "zod": "4.0.15"
   },

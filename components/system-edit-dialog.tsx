@@ -7,14 +7,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { VariableMultiSelect } from "./variable-multiselect"
 import type { System } from "@/lib/types"
+import { toast } from "react-hot-toast"
 
 
 export default function SystemEditDialog({
   system,
   trigger,
+  onSystemUpdated,
 }: {
   system: System
   trigger: React.ReactNode
+  onSystemUpdated?: () => void
 }) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState(system.name)
@@ -37,17 +40,31 @@ export default function SystemEditDialog({
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     startTransition(async () => {
-      await fetch(`/api/systems?id=${system.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          hostname,
-          tags: selectedTags,
-          baselines: selectedBaselines,
-        }),
-      })
-      setOpen(false)
+      try {
+        const response = await fetch(`/api/systems?id=${system.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            hostname,
+            tags: selectedTags,
+            baselines: selectedBaselines,
+          }),
+        })
+        
+        if (!response.ok) {
+          throw new Error('Failed to update system')
+        }
+        
+        setOpen(false)
+        
+        // Call the callback to refresh the systems list and show toast
+        if (onSystemUpdated) {
+          onSystemUpdated()
+        }
+      } catch (error) {
+        toast.error("Failed to update system")
+      }
     })
   }
 

@@ -6,8 +6,17 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { VariableMultiSelect } from "./variable-multiselect"
+import { toast } from "react-hot-toast"
 
-export default function CreateSystemDialog({ open = false, onOpenChange = () => {} }: { open?: boolean; onOpenChange?: (open: boolean) => void }) {
+export default function CreateSystemDialog({ 
+  open = false, 
+  onOpenChange = () => {}, 
+  onSystemCreated 
+}: { 
+  open?: boolean; 
+  onOpenChange?: (open: boolean) => void;
+  onSystemCreated?: (system: any) => void;
+}) {
   const [name, setName] = useState("")
   const [hostname, setHostname] = useState("")
   const [selectedGlobals, setSelectedGlobals] = useState<string[]>([])
@@ -31,22 +40,38 @@ export default function CreateSystemDialog({ open = false, onOpenChange = () => 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     startTransition(async () => {
-      await fetch("/api/systems", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          hostname,
-          tags: selectedTags, 
-          baselines: selectedGlobals, 
-          apiKey: "pm_" + Math.random().toString(36).slice(2, 10).toUpperCase(),
-        }),
-      })
-      onOpenChange(false)
-      setName("")
-      setHostname("")
-      setSelectedGlobals([])
-      setSelectedTags([])
+      try {
+        const response = await fetch("/api/systems", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            hostname,
+            tags: selectedTags, 
+            baselines: selectedGlobals, 
+            apiKey: "pm_" + Math.random().toString(36).slice(2, 10).toUpperCase(),
+          }),
+        })
+        
+        if (!response.ok) {
+          throw new Error('Failed to create system')
+        }
+        
+        const newSystem = await response.json()
+        
+        onOpenChange(false)
+        setName("")
+        setHostname("")
+        setSelectedGlobals([])
+        setSelectedTags([])
+        
+        // Call the callback to refresh the systems list and show toast
+        if (onSystemCreated) {
+          onSystemCreated(newSystem)
+        }
+      } catch (error) {
+        toast.error("Failed to create system")
+      }
     })
   }
 

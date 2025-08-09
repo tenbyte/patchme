@@ -48,6 +48,31 @@ export default function SystemsTable({ systems = [] as System[] }) {
     setLocalSystems(systems)
   }, [systems])
 
+  // Function to refresh systems from API
+  const refreshSystems = async () => {
+    try {
+      const res = await fetch('/api/systems')
+      if (res.ok) {
+        const updatedSystems = await res.json()
+        setLocalSystems(updatedSystems)
+      }
+    } catch (error) {
+      console.error('Failed to refresh systems:', error)
+    }
+  }
+
+  // Callback for when a system is created
+  const handleSystemCreated = async (newSystem: System) => {
+    toast.success("System created", { id: "create-system-toast" })
+    await refreshSystems()
+  }
+
+  // Callback for when a system is updated
+  const handleSystemUpdated = async () => {
+    toast.success("System updated", { id: "update-system-toast" })
+    await refreshSystems()
+  }
+
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
     return localSystems.filter((sys) => {
@@ -143,6 +168,7 @@ export default function SystemsTable({ systems = [] as System[] }) {
                       {/* Edit */}
                       <SystemEditDialog
                         system={s}
+                        onSystemUpdated={handleSystemUpdated}
                         trigger={
                           <Button variant="outline" size="sm" className="h-8">
                             <Pencil className="w-4 h-4 mr-1" />
@@ -162,7 +188,10 @@ export default function SystemsTable({ systems = [] as System[] }) {
                         }
                       />
                       {/* Delete */}
-                      <Button variant="ghost" size="sm" className="h-8" onClick={async () => { await apiDeleteSystem(s.id); router.refresh() }}>
+                      <Button variant="ghost" size="sm" className="h-8" onClick={async () => { 
+                        await apiDeleteSystem(s.id); 
+                        await refreshSystems();
+                      }}>
                         <Trash2 className="w-4 h-4 mr-1" />
                         Delete
                       </Button>
@@ -175,7 +204,7 @@ export default function SystemsTable({ systems = [] as System[] }) {
         </Table>
       </div>
 
-      <CreateSystemDialog open={openCreate} onOpenChange={setOpenCreate} />
+      <CreateSystemDialog open={openCreate} onOpenChange={setOpenCreate} onSystemCreated={handleSystemCreated} />
     </Card>
   )
 }
