@@ -20,13 +20,11 @@ echo "Running Prisma migrations..."
 npx prisma migrate deploy
 
 echo "Seeding database..."
-# Verwende tsx für direktes Ausführen des TypeScript-Codes
-echo "Starte Seeding mit TSX für bessere Performance..."
+echo "start seeding with tsx..."
 if npx tsx prisma/seed.ts; then
     echo "✅ Database seeding completed successfully"
 else
     echo "❌ Database seeding failed - checking for errors..."
-    # Versuche einfache Lösung mit Umgebungsvariablen für Logging
     export DEBUG="prisma:*"
     export PRISMA_ENGINE_PROTOCOL="json"
     if npx tsx prisma/seed.ts; then
@@ -37,4 +35,6 @@ else
 fi
 
 echo "Starting application..."
+export HOSTNAME=0.0.0.0
+export PORT=${PORT:-3000}
 exec node server.js
