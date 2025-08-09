@@ -1,15 +1,23 @@
 import { PrismaClient } from "./generated/prisma/client"
 import type { User } from "@/lib/types"
+import { jwtVerify } from "jose"
 
 const prisma = new PrismaClient()
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "changeme-supersecret")
 
-export async function getUserForSession(token: string): Promise<User | null> {
-  const session = await prisma.session.findUnique({
-    where: { token },
-    include: { user: true },
-  })
-  if (!session || !session.user) return null
-  return session.user as User
+export async function getUserForSession(token: string) {
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET)
+    return {
+      id: payload.userId,
+      name: payload.name,
+      role: payload.role,
+      email: payload.email ?? "",
+      password: "",
+    } as User
+  } catch {
+    return null
+  }
 }
 
 export async function getUsers(): Promise<User[]> {

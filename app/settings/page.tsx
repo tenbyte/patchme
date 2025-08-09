@@ -6,13 +6,14 @@ import type { User } from "@/lib/types"
 export const dynamic = "force-dynamic"
 
 export default async function SettingsPage() {
-
-  const cookieStore = cookies()
-  const sessionToken = (await cookieStore).get("pmsession")?.value
-  let user: User | undefined
+  const cookieStore = await cookies()
+  const sessionToken = cookieStore.get("pmsession")?.value
+  let user: User | null | undefined
   if (sessionToken) {
-    user = await getUserForSession(sessionToken) as User | undefined
+    user = await getUserForSession(sessionToken)
   }
+  console.log("sessionToken", sessionToken)
+console.log("user", user)
   if (!user || user.role !== "admin") {
     return <main className="min-h-screen flex items-center justify-center text-xl">Nicht autorisiert</main>
   }
