@@ -7,6 +7,7 @@ import {
 import { PrismaClient } from "@/lib/generated/prisma/client"
 import { cookies } from "next/headers"
 import { jwtVerify } from "jose"
+import bcrypt from "bcryptjs"
 
 const prisma = new PrismaClient()
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "")
@@ -14,6 +15,9 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "")
 // POST /api/users
 export async function POST(req: NextRequest) {
   const data = await req.json()
+  if (data.password) {
+    data.password = await bcrypt.hash(data.password, 10)
+  }
   const user = await createUser(data)
   return NextResponse.json(user)
 }
@@ -24,6 +28,9 @@ export async function PUT(req: NextRequest) {
   const id = searchParams.get("id")
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 })
   const data = await req.json()
+  if (data.password) {
+    data.password = await bcrypt.hash(data.password, 10)
+  }
   const user = await updateUserById({ ...data, id })
   return NextResponse.json(user)
 }
