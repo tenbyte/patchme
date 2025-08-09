@@ -86,4 +86,7 @@ Pull requests, bug reports, and feature requests are welcome!
 
 MIT License – see [LICENSE](./LICENSE) for details.
 
+## Disclaimer
+PatchMe is provided without any warranty. No liability is assumed for damages resulting from the use, malfunction, or misconfiguration of the software. Use at your own risk. Please evaluate the suitability of PatchMe for your specific use case and ensure compliance with applicable security requirements before deployment.
+
 ---
