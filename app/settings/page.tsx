@@ -12,10 +12,8 @@ export default async function SettingsPage() {
   if (sessionToken) {
     user = await getUserForSession(sessionToken)
   }
-  console.log("sessionToken", sessionToken)
-console.log("user", user)
   if (!user || user.role !== "admin") {
-    return <main className="min-h-screen flex items-center justify-center text-xl">Nicht autorisiert</main>
+    return <main className="min-h-screen flex items-center justify-center text-xl">Nope</main>
   }
   const users = await getUsers()
   return (
