@@ -10,9 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
+import { toast } from "react-hot-toast"
 
 function generatePassword(length = 16) {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*()-_=+[]{}"
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnopqrstuvwxyz23456789!@#$%^&*+";
   const arr = new Uint32Array(length)
   crypto.getRandomValues(arr)
   return Array.from(arr, (n) => chars[n % chars.length]).join("")
@@ -40,7 +41,14 @@ async function apiUpdateUser({ id, name, email, password, role }: { id: string; 
 
 async function apiDeleteUser(id: string) {
   const res = await fetch(`/api/users?id=${id}`, { method: "DELETE" })
-  if (!res.ok) throw new Error("Failed to delete user")
+  if (!res.ok) {
+    let message = "Failed to delete user"
+    try {
+      const data = await res.json()
+      if (data?.error) message = data.error
+    } catch {}
+    throw new Error(message)
+  }
   return res.json()
 }
 
@@ -142,7 +150,18 @@ export default function UsersTable({ users = [] as User[] }) {
                     <Pencil className="w-4 h-4 mr-1" />
                     Edit
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={async () => { await apiDeleteUser(u.id); router.refresh() }}>
+                  <Button variant="ghost" size="sm" onClick={async () => {
+                    try {
+                      await apiDeleteUser(u.id)
+                      router.refresh()
+                    } catch (err: any) {
+                      if (err instanceof Error && err.message) {
+                        toast.error(err.message)
+                      } else {
+                        toast.error("Failed to delete user")
+                      }
+                    }
+                  }}>
                     <Trash2 className="w-4 h-4 mr-1" />
                     Delete
                   </Button>
