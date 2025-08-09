@@ -1,50 +1,50 @@
 # PatchMe Docker Setup
 
-PatchMe ist ein System-Monitoring-Tool, das als Docker-Container bereitgestellt wird.
+PatchMe is a system monitoring tool provided as a Docker container.
 
-## Schnellstart
+## Quick Start
 
-### Option 1: Mit vorkompiliertem Image (Empfohlen)
+### Option 1: Use Prebuilt Image (Recommended)
 
 ```bash
-# Repository klonen
+# Clone repository
 git clone <your-repo-url>
 cd patchme
 
-# Mit vorkompiliertem Image starten
+# Start with prebuilt image
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
-### Option 2: Selbst kompilieren
+### Option 2: Build Yourself
 
 ```bash
-# Repository klonen
+# Clone repository
 git clone <your-repo-url>
 cd patchme
 
-# Selbst bauen und starten
+# Build and start yourself
 docker-compose up -d --build
 ```
 
-## Zugriff
+## Access
 
-Nach dem Start ist PatchMe unter folgender Adresse erreichbar:
-- **Web-Interface**: http://localhost:3000
+After starting, PatchMe is available at:
+- **Web Interface**: http://localhost:3000
 - **API**: http://localhost:3000/api
 
-## Standard-Zugangsdaten
+## Default Credentials
 
-Die Seed-Daten erstellen einen Standard-Admin-Benutzer:
-- **Benutzername**: admin@example.com
-- **Passwort**: admin123
+The seed data creates a default admin user:
+- **Username**: admin@example.com
+- **Password**: admin123
 
-⚠️ **Wichtig**: Ändere das Passwort nach der ersten Anmeldung!
+⚠️ **Important**: Change the password after your first login!
 
-## Konfiguration
+## Configuration
 
-### Umgebungsvariablen
+### Environment Variables
 
-Erstelle eine `.env`-Datei oder passe die Umgebungsvariablen in `docker-compose.yml` an:
+Create a `.env` file or adjust the environment variables in `docker-compose.yml`:
 
 ```env
 DATABASE_URL=mysql://patchme:patchme@db:3306/patchme
@@ -52,46 +52,46 @@ JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 NODE_ENV=production
 ```
 
-### Datenbank-Einstellungen
+### Database Settings
 
-Standardmäßig wird eine MySQL 8.0 Datenbank verwendet. Die Konfiguration findest du in der `docker-compose.yml`:
+By default, a MySQL 8.0 database is used. Configuration can be found in `docker-compose.yml`:
 
-- **Datenbank**: patchme
-- **Benutzer**: patchme
-- **Passwort**: patchme
-- **Root-Passwort**: rootpassword
+- **Database**: patchme
+- **User**: patchme
+- **Password**: patchme
+- **Root Password**: rootpassword
 
 ## Volumes
 
-- `mysql_data`: Persistente Speicherung der MySQL-Datenbank
+- `mysql_data`: Persistent storage for the MySQL database
 
 ## Ports
 
-- **3000**: Web-Interface und API
-- **3306**: MySQL-Datenbank (optional für externe Zugriffe)
+- **3000**: Web interface and API
+- **3306**: MySQL database (optional for external access)
 
-## Wartung
+## Maintenance
 
-### Logs anzeigen
+### Show Logs
 
 ```bash
-# Alle Services
+# All services
 docker-compose logs
 
-# Nur App
+# App only
 docker-compose logs app
 
-# Nur Datenbank
+# Database only
 docker-compose logs db
 ```
 
-### Container neustarten
+### Restart Containers
 
 ```bash
 docker-compose restart
 ```
 
-### Datenbank zurücksetzen
+### Reset Database
 
 ```bash
 docker-compose down -v
@@ -101,33 +101,33 @@ docker-compose up -d
 ### Updates
 
 ```bash
-# Bei vorkompiliertem Image
+# With prebuilt image
 docker-compose -f docker-compose.prod.yml pull
 docker-compose -f docker-compose.prod.yml up -d
 
-# Bei selbst kompiliertem Image
+# With self-built image
 docker-compose down
 docker-compose up -d --build
 ```
 
-## Sicherheit
+## Security
 
-Für Production-Umgebungen:
+For production environments:
 
-1. **JWT_SECRET** ändern
-2. **Datenbank-Passwörter** ändern
-3. **Admin-Passwort** nach erstem Login ändern
-4. **Firewall-Regeln** für Port 3306 setzen (falls nicht benötigt)
+1. Change **JWT_SECRET**
+2. Change **database passwords**
+3. Change **admin password** after first login
+4. Set up **firewall rules** for port 3306 (if not needed externally)
 
 ## Backup
 
-### Datenbank-Backup
+### Database Backup
 
 ```bash
 docker-compose exec db mysqldump -u patchme -ppatchme patchme > backup.sql
 ```
 
-### Datenbank-Restore
+### Database Restore
 
 ```bash
 docker-compose exec -i db mysql -u patchme -ppatchme patchme < backup.sql
@@ -135,30 +135,30 @@ docker-compose exec -i db mysql -u patchme -ppatchme patchme < backup.sql
 
 ## Troubleshooting
 
-### Container startet nicht
+### Container does not start
 
 ```bash
-# Status prüfen
+# Check status
 docker-compose ps
 
-# Logs prüfen
+# Check logs
 docker-compose logs
 
-# Neu starten
+# Restart
 docker-compose down
 docker-compose up -d
 ```
 
-### Datenbank-Verbindungsfehler
+### Database connection error
 
-1. Warte bis MySQL vollständig gestartet ist (kann 30-60 Sekunden dauern)
-2. Prüfe die DATABASE_URL
-3. Stelle sicher, dass der `db`-Container läuft
+1. Wait until MySQL is fully started (can take 30-60 seconds)
+2. Check the DATABASE_URL
+3. Make sure the `db` container is running
 
-### Performance-Probleme
+### Performance issues
 
-Erhöhe die verfügbaren Ressourcen in Docker Desktop oder deinem Docker-Host.
+Increase available resources in Docker Desktop or your Docker host.
 
 ## Support
 
-Bei Problemen erstelle ein Issue im Repository oder kontaktiere das Entwicklerteam.
+If you have issues, open an issue in the repository or contact the development team.
