@@ -14,8 +14,32 @@ PatchMe is a minmal system version monitoring tool. It provides a central overvi
 - **User & Role Management:** Access control for different user groups.
 - **Dark Mode & Responsive UI:** Modern, customizable interface.
 
+## Usage: 
 
-## Getting Started
+![Screenshot Dashboard](./.github/ingestapi.png)
+
+
+To start monitoring a system, first create a new system entry in the PatchMe dashboard. Once the system is registered, you can report its software versions by sending a JSON payload to the `/api/ingest` endpoint.
+
+For Linux environments, this is typically automated using a script and a scheduled task (e.g., with `cron` or `systemd` timer). The script collects version information and sends it to PatchMe via a simple `curl` command:
+
+```bash
+curl -X POST https://your-patchme-instance/api/ingest \
+  -H "Authorization: Bearer <YOUR_API_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "systemId": "<SYSTEM_ID>",
+    "software": [
+      { "name": "openssl", "version": "1.1.1w" },
+      { "name": "nginx", "version": "1.24.0" }
+    ]
+  }'
+```
+
+You can automate this process to run daily, ensuring PatchMe always has up-to-date version data for all your systems.
+
+
+## Installation: Getting Started
 
 ### Prerequisites
 
