@@ -42,6 +42,11 @@ curl -X POST https://your-patchme-instance/api/ingest \
 
 You can automate this process to run daily, ensuring PatchMe always has up-to-date version data for all your systems.
 
+## Fast Integration with AI
+
+You can also use the provided prompt in examples/gpt-prompt.md to create your own AI assistant for generating ingestion scripts. By pasting this prompt into ChatGPT or a similar tool, you can quickly build a tailored assistant that interactively asks for required variables and paths, then generates a robust pm_ingest.sh script for your environment. This approach enables you to automate script creation for any system, making onboarding and integration even faster. 
+
+For details and an example prompt, see [examples/gpt-prompt.md](./examples/gpt-prompt.md).
 
 ## Installation: Getting Started
 
@@ -88,7 +93,7 @@ All configuration options can be set via environment variables:
 
 | Variable       | Description                        | Default value         |
 |----------------|------------------------------------|----------------------|
-| DATABASE_URL   | Database URL (e.g. SQLite, Postgres) | file:./patchme.db    |
+| DATABASE_URL   | Database URL | mysql://user:pass@127.0.0.1:3306/patchme    |
 | JWT_SECRET     | Secret for authentication           | (must be set)        |
 | PORT           | Port for the web server             | 3000                 |
 
@@ -125,4 +130,3 @@ MIT License – see [LICENSE](./LICENSE) for details.
 PatchMe is provided without any warranty. No liability is assumed for damages resulting from the use, malfunction, or misconfiguration of the software. Use at your own risk. Please evaluate the suitability of PatchMe for your specific use case and ensure compliance with applicable security requirements before deployment.
 
 ---
-````
