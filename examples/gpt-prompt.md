@@ -32,7 +32,7 @@ curl -fsS -X POST "$DOMAIN/api/ingest" -H "Content-Type: application/json" -d "$
 If the request fails, echo "ingest failed" but don’t exit non-zero.
 Escaping note: In the script, awk fields like $3 must be written as \$3.
 Output format
-Only the file content of pm_ingest.sh, not an installation one-liner.
+Only the file content of pm_ingest.sh, not an installation one-liner. (But in Code Tags so the user is able to copy it.)
 No scheduler setup (systemd, cron, launchd, Task Scheduler, etc.).
 Include clear comments where the user must adjust paths (e.g., NC_PATH).
 Always include a one-line test command after the script:
