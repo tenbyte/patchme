@@ -44,7 +44,7 @@ You can automate this process to run daily, ensuring PatchMe always has up-to-da
 ### Prerequisites
 
 - Docker (recommended) or Node.js 18+
-- A database (e.g. SQLite, PostgreSQL – default: SQLite)
+- A mariadb / mysql database
 
 ### Quickstart with Docker
 
@@ -100,7 +100,7 @@ See [DOCKER.md](./DOCKER.md) for more details.
 
 - Frontend: Next.js, React, Tailwind CSS
 - Backend: Prisma ORM, REST API
-- Database: mariadb / mysql, most prisma db connections possible
+- Database: Only MariaDB / MySQL are supported
 
 ## Contributing
 
