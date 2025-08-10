@@ -2,12 +2,13 @@ import { PrismaClient, Prisma } from "./generated/prisma/client"
 
 // Connection Pool configuration based on environment
 const getDatabaseConfig = (): Prisma.PrismaClientOptions => {
-const isProduction = process.env.NODE_ENV !== 'development'
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === undefined
   
   const baseConfig: Prisma.PrismaClientOptions = {
     datasources: {
       db: {
-        url: process.env.DATABASE_URL
+        // Fallback URL for build-time when DATABASE_URL is not available
+        url: process.env.DATABASE_URL || "mysql://build:build@localhost:3306/build"
       }
     },
     // Only log errors by default, disable query logging
