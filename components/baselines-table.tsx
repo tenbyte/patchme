@@ -145,14 +145,14 @@ export default function BaselinesTable({ baselines = [] as Baseline[] }) {
 
   return (
     <Card className="p-4 space-y-4">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-lg font-semibold">Baselines</div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input className="pl-8 w-60" placeholder="Search..." value={q} onChange={(e) => setQ(e.target.value)} />
+            <Input className="pl-8 w-full sm:w-60" placeholder="Search..." value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
-          <Button onClick={openCreate}>
+          <Button onClick={openCreate} className="w-full sm:w-auto">
             <Plus className="w-4 h-4 mr-2" />
             Add baseline
           </Button>
@@ -176,21 +176,23 @@ export default function BaselinesTable({ baselines = [] as Baseline[] }) {
                 <TableCell>{b.variable}</TableCell>
                 <TableCell>{b.minVersion}</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="outline" size="sm" className="mr-2" onClick={() => openEdit(b)}>
-                    <Pencil className="w-4 h-4 mr-1" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={async () => {
-                      await apiDeleteBaseline(b.id)
-                      router.refresh()
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Delete
-                  </Button>
+                  <div className="flex flex-col gap-1 sm:flex-row sm:justify-end sm:gap-2">
+                    <Button variant="outline" size="sm" onClick={() => openEdit(b)}>
+                      <Pencil className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={async () => {
+                        await apiDeleteBaseline(b.id)
+                        router.refresh()
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Delete
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

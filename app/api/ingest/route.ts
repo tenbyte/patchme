@@ -78,9 +78,9 @@ async function safeParseJSON(req: NextRequest): Promise<{ success: true; data: a
     
     // Check for common control characters that break JSON
     const controlChars = rawBody.match(/[\x00-\x1F\x7F]/g)
-    if (controlChars) {
-      console.log('Found control characters:', controlChars.map(c => `\\x${c.charCodeAt(0).toString(16).padStart(2, '0')}`))
-    }
+    // if (controlChars) {
+    //   console.log('Found control characters:', controlChars.map(c => `\\x${c.charCodeAt(0).toString(16).padStart(2, '0')}`))
+    // }
     
     // Try to clean the JSON string
     const cleanedBody = rawBody

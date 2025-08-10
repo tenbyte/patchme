@@ -36,7 +36,6 @@ function formatLogLine(log: ActivityLog) {
   const sys = log.systemName ?? "Unknown"
   let metaPreview = ""
   if (log.meta && Array.isArray(log.meta.versions)) {
-    // Zeige ALLE Versionen an, ohne das "+X more"
     const allVersions = log.meta.versions.map((e: { variable: string; version: string }) => {
       return `${e.variable}=${e.version}`
     })
@@ -87,7 +86,6 @@ export default function Dashboard(p: Props) {
 
   return (
     <div className="mx-auto max-w-screen-2xl px-4 py-6 space-y-6">
-      {/* Page controls */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="text-xl font-bold">Dashboard</div>
@@ -114,7 +112,6 @@ export default function Dashboard(p: Props) {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm text-muted-foreground">Tag filters:</span>
         {tags.map((t: Tag) => (
@@ -137,7 +134,6 @@ export default function Dashboard(p: Props) {
         )}
       </div>
 
-      {/* Metrics */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
@@ -174,7 +170,6 @@ export default function Dashboard(p: Props) {
         </Card>
       </div>
 
-      {/* Systems - full width */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle>Systems</CardTitle>
@@ -199,7 +194,6 @@ export default function Dashboard(p: Props) {
         </CardContent>
       </Card>
 
-      {/* Inbound Activity - full width, below Systems */}
       <Card>
         <CardHeader className="pb-3 flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
@@ -226,7 +220,6 @@ export default function Dashboard(p: Props) {
         </CardContent>
       </Card>
 
-      {/* Dialogs */}
       <CreateSystemDialog open={openCreate} onOpenChange={setOpenCreate} />
       <CreateBaselineDialog open={openBaseline} onOpenChange={setOpenBaseline} />
     </div>

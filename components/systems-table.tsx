@@ -155,13 +155,14 @@ export default function SystemsTable({ systems = [] as System[] }) {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-end sm:gap-2">
                       {/* Ingest API */}
                       <IngestApiDialog
                         system={s}
                         trigger={
-                          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Ingest API">
-                            <Command className="w-4 h-4" />
+                          <Button variant="ghost" size="sm" className="h-8 w-full sm:w-8 justify-start sm:justify-center" aria-label="Ingest API">
+                            <Command className="w-4 h-4 sm:mr-0 mr-2" />
+                            <span className="sm:hidden">Ingest API</span>
                           </Button>
                         }
                       />
@@ -170,7 +171,7 @@ export default function SystemsTable({ systems = [] as System[] }) {
                         system={s}
                         onSystemUpdated={handleSystemUpdated}
                         trigger={
-                          <Button variant="outline" size="sm" className="h-8">
+                          <Button variant="outline" size="sm" className="h-8 w-full sm:w-auto justify-start sm:justify-center">
                             <Pencil className="w-4 h-4 mr-1" />
                             Edit
                           </Button>
@@ -181,14 +182,14 @@ export default function SystemsTable({ systems = [] as System[] }) {
                         systemId={s.id}
                         currentKey={s.apiKey}
                         trigger={
-                          <Button variant="outline" size="sm" className="h-8">
+                          <Button variant="outline" size="sm" className="h-8 w-full sm:w-auto justify-start sm:justify-center">
                             <Key className="w-4 h-4 mr-1" />
                             API key
                           </Button>
                         }
                       />
                       {/* Delete */}
-                      <Button variant="ghost" size="sm" className="h-8" onClick={async () => { 
+                      <Button variant="ghost" size="sm" className="h-8 w-full sm:w-auto justify-start sm:justify-center" onClick={async () => { 
                         await apiDeleteSystem(s.id); 
                         await refreshSystems();
                       }}>

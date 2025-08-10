@@ -86,4 +86,6 @@ echo
 echo "Check service logs with:"
 echo "  journalctl -u pm_ingest.service"
 echo
-echo "Systemd unit files installed to: ${SYSTEMD_DIR}"
+echo "Systemd unit files installed to:"
+echo "  ${SYSTEMD_DIR}/${SERVICE_FILE}"
+echo "  ${SYSTEMD_DIR}/${TIMER_FILE}"

@@ -58,7 +58,7 @@ ${entries.map(e => `    { "variable": "${e.variable}", "version": "${e.current |
   return (
     <Dialog>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl max-w-[95vw]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Command className="w-4 h-4" />
@@ -74,7 +74,7 @@ ${entries.map(e => `    { "variable": "${e.variable}", "version": "${e.current |
           </TabsList>
           <TabsContent value="schema" className="mt-3">
             <div className="relative">
-              <div className="text-sm font-mono rounded-md border bg-muted/50 p-3 overflow-auto max-h-[60vh] whitespace-pre-wrap">
+              <div className="text-sm font-mono rounded-md border bg-muted/50 p-3 overflow-auto max-h-[60vh] whitespace-pre-wrap break-all">
                 {schema}
               </div>
               <Button
@@ -90,7 +90,7 @@ ${entries.map(e => `    { "variable": "${e.variable}", "version": "${e.current |
           </TabsContent>
           <TabsContent value="curl" className="mt-3">
             <div className="relative">
-              <div className="text-sm font-mono rounded-md border bg-muted/50 p-3 overflow-auto max-h-[60vh] whitespace-pre-wrap">
+              <div className="text-sm font-mono rounded-md border bg-muted/50 p-3 overflow-auto max-h-[60vh] whitespace-pre-wrap break-all">
                 {curl}
               </div>
               <Button
@@ -110,7 +110,7 @@ ${entries.map(e => `    { "variable": "${e.variable}", "version": "${e.current |
                 Run this command on your Debian/Ubuntu system to automatically download and install the systemd timer and service files:
               </div>
               <div className="relative">
-                <div className="text-sm font-mono rounded-md border bg-muted/50 p-3 overflow-auto whitespace-pre-wrap">
+                <div className="text-sm font-mono rounded-md border bg-muted/50 p-3 overflow-auto whitespace-pre-wrap break-all">
                   {activateCommand}
                 </div>
                 <Button
