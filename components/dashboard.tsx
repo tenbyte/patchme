@@ -68,7 +68,7 @@ export default function Dashboard(p: Props) {
         !q ||
         s.name.toLowerCase().includes(q) ||
         s.hostname.toLowerCase().includes(q) ||
-        s.baselines.some((b: Baseline) =>
+        s.baselines.some((b) =>
           b.name.toLowerCase().includes(q) ||
           b.variable.toLowerCase().includes(q) ||
           b.minVersion.toLowerCase().includes(q)

@@ -46,11 +46,16 @@ export default function SystemCard({ system }: { system: System }) {
       <div className="space-y-1 max-h-64 overflow-y-auto">
         {(system.baselines || []).map((b) => {
           const val = system.baselineValues?.find((bv) => bv.baselineId === b.id)?.value
+          const getRequiredText = () => {
+            if (b.type === "INFO") return "Info only"
+            if (b.type === "MAX") return `≤ ${b.minVersion}`
+            return `≥ ${b.minVersion}` // MIN or default
+          }
           return (
             <div key={b.id} className="text-xs p-2 bg-muted/50 rounded">
               <div className="font-medium">{b.name}</div>
               <div className="text-muted-foreground">
-                Current: {val || "(no value)"} | Required: ≥ {b.minVersion}
+                Current: {val || "(no value)"} | Required: {getRequiredText()}
               </div>
             </div>
           )
@@ -107,9 +112,18 @@ export default function SystemCard({ system }: { system: System }) {
               ) : (
                 shown.map((b) => {
                   const val = system.baselineValues?.find((bv) => bv.baselineId === b.id)?.value
+                  const getVersionText = () => {
+                    if (b.type === "INFO") {
+                      return `${b.name}: ${val || "(no value)"}`
+                    }
+                    if (b.type === "MAX") {
+                      return `${b.name}: ${val || "(no value)"} (≤ ${b.minVersion})`
+                    }
+                    return `${b.name}: ${val || "(no value)"} (≥ ${b.minVersion})` // MIN or default
+                  }
                   return (
                     <span key={b.id} className={pillVersion}>
-                      {b.name}: {val ? val : <span className="text-muted-foreground">(no value)</span>} (≥ {b.minVersion})
+                      {getVersionText()}
                     </span>
                   )
                 })

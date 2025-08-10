@@ -47,6 +47,7 @@ async function main() {
           id: baseline.id,
           name: baseline.name,
           variable: baseline.variable,
+          type: baseline.type,
           minVersion: baseline.minVersion,
         },
       });

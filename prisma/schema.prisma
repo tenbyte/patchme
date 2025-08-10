@@ -45,6 +45,7 @@ model Baseline {
   id         String   @id @default(uuid())
   name       String
   variable   String   @unique
+  type       String   @default("MIN")
   minVersion String
   systems    System[] @relation("SystemBaselines")
   baselineValues SystemBaselineValue[]

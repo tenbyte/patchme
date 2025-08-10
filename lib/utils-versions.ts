@@ -19,13 +19,23 @@ export function compareVersions(a: string, b: string): number {
   return 0
 }
 
-export function getStatusForSystem(s: System, baselines: { variable: string; minVersion: string }[]): "Ok" | "Warning" {
+export function getStatusForSystem(s: System, baselines: { variable: string; type?: string; minVersion: string }[]): "Ok" | "Warning" {
   for (const b of baselines) {
+    if (b.type === "INFO") continue
+    
     const baseline = s.baselines.find((bl) => bl.variable === b.variable)
     if (!baseline) continue
     const val = s.baselineValues?.find((bv) => bv.baselineId === baseline.id)?.value
-    if (!val || compareVersions(val, b.minVersion) < 0) {
-      return "Warning"
+    if (!val) continue
+    
+    if (b.type === "MAX") {
+      if (compareVersions(val, b.minVersion) > 0) {
+        return "Warning"
+      }
+    } else {
+      if (compareVersions(val, b.minVersion) < 0) {
+        return "Warning"
+      }
     }
   }
   return "Ok"

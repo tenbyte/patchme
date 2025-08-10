@@ -2,17 +2,15 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { logSystemActivity } from "@/lib/activitylog"
 
-// Advanced Rate Limiting 
 class InMemoryRateLimit {
   private rateLimitMap = new Map<string, { count: number; resetTime: number }>()
   private cleanupInterval: NodeJS.Timeout
   
   constructor(
-    private readonly windowMs = 60 * 1000, // 1 minute
-    private readonly maxRequests = 100,     // Max requests per window
-    private readonly cleanupIntervalMs = 5 * 60 * 1000 // Cleanup every 5 minutes
+    private readonly windowMs = 60 * 1000,
+    private readonly maxRequests = 100,
+    private readonly cleanupIntervalMs = 5 * 60 * 1000
   ) {
-    // Automatic cleanup of old entries
     this.cleanupInterval = setInterval(() => {
       this.cleanup()
     }, this.cleanupIntervalMs)
@@ -49,7 +47,6 @@ class InMemoryRateLimit {
     }
   }
   
-  // Cleanup on process end
   destroy() {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval)
@@ -57,32 +54,23 @@ class InMemoryRateLimit {
   }
 }
 
-// Rate limiter instance
 const rateLimiter = new InMemoryRateLimit(
-  60 * 1000,  // 1 minute window
-  100         // Max 100 requests per minute per API key
+  60 * 1000,  // 1 minute
+  100         // Max 100 requests per min
 )
 
-// Graceful shutdown
 process.on('SIGTERM', () => {
   rateLimiter.destroy()
 })
 
-// Safe JSON parser with detailed error logging
 async function safeParseJSON(req: NextRequest): Promise<{ success: true; data: any } | { success: false; error: string; rawBody: string }> {
   try {
     const rawBody = await req.text()
-    
-    // Log raw body for debugging (truncated for security)
-    console.log('Raw request body (first 500 chars):', rawBody.substring(0, 500))
-    
-    // Check for common control characters that break JSON
     const controlChars = rawBody.match(/[\x00-\x1F\x7F]/g)
     // if (controlChars) {
     //   console.log('Found control characters:', controlChars.map(c => `\\x${c.charCodeAt(0).toString(16).padStart(2, '0')}`))
     // }
     
-    // Try to clean the JSON string
     const cleanedBody = rawBody
       .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control chars except \t, \n, \r
       .trim()
@@ -109,12 +97,11 @@ async function safeParseJSON(req: NextRequest): Promise<{ success: true; data: a
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown JSON parse error',
-      rawBody: rawBody.substring(0, 500) // Truncate for security
+      rawBody: rawBody.substring(0, 500)
     }
   }
 }
 
-// Extract position information from JSON parse error
 function extractPositionFromError(errorMessage: string): { position?: number; line?: number; column?: number } | null {
   const positionMatch = errorMessage.match(/position (\d+)/)
   const lineColumnMatch = errorMessage.match(/line (\d+) column (\d+)/)
@@ -126,7 +113,6 @@ function extractPositionFromError(errorMessage: string): { position?: number; li
   }
 }
 
-// Retry wrapper for database operations with exponential backoff
 async function withRetry<T>(
   operation: () => Promise<T>,
   maxRetries: number = 3,
@@ -140,19 +126,16 @@ async function withRetry<T>(
     } catch (error: any) {
       lastError = error
       
-      // MySQL Optimistic Locking Error (Record has changed)
       if (error.code === 'P2034' || 
           (error.message && error.message.includes('Record has changed since last read'))) {
         
         if (attempt < maxRetries) {
-          // Exponential backoff with jitter
           const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 100
           await new Promise(resolve => setTimeout(resolve, delay))
           continue
         }
       }
       
-      // For other errors, don't retry
       throw error
     }
   }
@@ -162,7 +145,6 @@ async function withRetry<T>(
 
 export async function POST(req: NextRequest) {
   try {
-    // Safe JSON parsing with detailed error logging
     const parseResult = await safeParseJSON(req)
     
     if (!parseResult.success) {
@@ -181,7 +163,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing key or versions array." }, { status: 400 })
     }
 
-    // Validate versions array structure
     const invalidVersions = versions.filter(v => !v || typeof v.variable !== 'string' || typeof v.version !== 'string')
     if (invalidVersions.length > 0) {
       console.error('Invalid version entries:', invalidVersions)
@@ -191,7 +172,6 @@ export async function POST(req: NextRequest) {
       }, { status: 400 })
     }
 
-    // Check rate limiting
     const rateLimit = rateLimiter.check(key)
     if (!rateLimit.allowed) {
       return NextResponse.json({ 
@@ -208,7 +188,6 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Find system (without include for better performance)
     const system = await prisma.system.findFirst({ 
       where: { apiKey: key },
       select: { id: true, name: true }
@@ -221,7 +200,6 @@ export async function POST(req: NextRequest) {
 
     console.log(`Processing ingest for system ${system.name} (${system.id}) with ${versions.length} versions`)
 
-    // Load all baselines once
     const baselines = await prisma.baseline.findMany({
       where: { variable: { in: versions.map(v => v.variable) } },
       select: { id: true, variable: true }
@@ -229,10 +207,8 @@ export async function POST(req: NextRequest) {
     
     const baselineMap = new Map(baselines.map(b => [b.variable, b.id]))
 
-    // Transaction with retry logic for high concurrency scenarios
     await withRetry(async () => {
       return await prisma.$transaction(async (tx) => {
-        // Batch upsert for better performance
         const upsertPromises = versions
           .filter(entry => baselineMap.has(entry.variable))
           .map(entry => {
@@ -255,19 +231,17 @@ export async function POST(req: NextRequest) {
 
         await Promise.all(upsertPromises)
 
-        // Update lastSeen with fresh read to avoid stale data
         await tx.system.update({ 
           where: { id: system.id }, 
           data: { lastSeen: new Date() } 
         })
       }, {
-        maxWait: 5000, // Max 5 seconds wait for transaction
-        timeout: 10000, // Max 10 seconds for transaction
-        isolationLevel: 'ReadCommitted' // Use READ COMMITTED to reduce lock contention
+        maxWait: 5000, 
+        timeout: 10000, 
+        isolationLevel: 'ReadCommitted'
       })
-    }, 3, 100) // Retry up to 3 times with exponential backoff
+    }, 3, 100)
 
-    // ActivityLog outside transaction (not critical for consistency)
     try {
       await logSystemActivity({ 
         systemId: system.id, 
@@ -275,7 +249,6 @@ export async function POST(req: NextRequest) {
         meta: { versions } 
       })
     } catch (logError) {
-      // Don't throw log errors as main operation was successful
       console.error('ActivityLog failed:', logError)
     }
 
@@ -299,7 +272,7 @@ export async function POST(req: NextRequest) {
     console.error('Ingest error:', {
       message: e.message,
       code: e.code,
-      stack: e.stack?.split('\n').slice(0, 5), // First 5 lines of stack trace
+      stack: e.stack?.split('\n').slice(0, 5),
       headers: {
         'content-type': req.headers.get('content-type'),
         'user-agent': req.headers.get('user-agent'),
@@ -307,19 +280,16 @@ export async function POST(req: NextRequest) {
       }
     })
     
-    // Special handling for known DB conflicts
     if (e.code === 'P2002') {
       return NextResponse.json({ error: "Conflict detected. Please retry." }, { status: 409 })
     }
     
-    // Optimistic locking conflicts after retries
     if (e.code === 'P2034' || (e.message && e.message.includes('Record has changed since last read'))) {
       return NextResponse.json({ 
         error: "High concurrency detected. Please retry with backoff." 
       }, { status: 409 })
     }
     
-    // Timeout errors
     if (e.code === 'P2024') {
       return NextResponse.json({ error: "Database timeout. Please retry." }, { status: 503 })
     }

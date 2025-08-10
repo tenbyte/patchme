@@ -18,6 +18,7 @@ export type SystemBaselineValue = {
     name: string
     variable: string
     minVersion: string
+    type?: "MIN" | "MAX" | "INFO"
   }
 }
 
@@ -28,7 +29,7 @@ export type System = {
   tags: { id: string; name: string }[]
   apiKey: string
   lastSeen?: string | null
-  baselines: { id: string; name: string; variable: string; minVersion: string }[]
+  baselines: { id: string; name: string; variable: string; minVersion: string; type?: "MIN" | "MAX" | "INFO" }[]
   baselineValues?: SystemBaselineValue[]
 }
 
@@ -41,6 +42,7 @@ export type Baseline = {
   id: string
   name: string
   variable: string
+  type: "MIN" | "MAX" | "INFO"
   minVersion: string
 }
 
