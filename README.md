@@ -7,7 +7,7 @@ PatchMe is a minmal system version monitoring tool. It provides a central overvi
 ## Features
 
 - **Central Dashboard:** Overview of all connected systems and their software states.
-- **Baseline Management:** Define minimum versions (baselines) for critical software components.
+- **Baseline Management:** Define minimum/maximum versions (baselines) or informational requirements for critical software components (MIN, MAX, INFO).
 - **Tagging & Grouping:** Flexibly tag and filter systems.
 - **Activity Log:** Traceable history of all changes and system messages.
 - **API-first:** Easy integration and automation via REST API.
@@ -28,13 +28,17 @@ curl -X POST https://your-patchme-instance/api/ingest \
   -H "Authorization: Bearer <YOUR_API_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
-    "systemId": "<SYSTEM_ID>",
-    "software": [
-      { "name": "openssl", "version": "1.1.1w" },
-      { "name": "nginx", "version": "1.24.0" }
+    "key": "<API_KEY>",
+    "versions": [
+      { "variable": "openssl", "version": "1.1.1w" },
+      { "variable": "nginx", "version": "1.24.0" }
     ]
   }'
 ```
+
+- **MIN**: Minimum version required (e.g. PHP >= 8.1)
+- **MAX**: Maximum version allowed (e.g. Node <= 18)
+- **INFO**: Informational only, no version check (z.B. OS, Distribution)
 
 You can automate this process to run daily, ensuring PatchMe always has up-to-date version data for all your systems.
 
@@ -88,6 +92,13 @@ All configuration options can be set via environment variables:
 | JWT_SECRET     | Secret for authentication           | (must be set)        |
 | PORT           | Port for the web server             | 3000                 |
 
+**Baselines:**
+| Type | Description | Example |
+|------|-------------|---------|
+| MIN  | Minimum version required | PHP >= 8.1 |
+| MAX  | Maximum version allowed  | Node <= 18 |
+| INFO | Informational only       | OS: Ubuntu |
+
 See [DOCKER.md](./DOCKER.md) for more details.
 
 
@@ -114,3 +125,4 @@ MIT License – see [LICENSE](./LICENSE) for details.
 PatchMe is provided without any warranty. No liability is assumed for damages resulting from the use, malfunction, or misconfiguration of the software. Use at your own risk. Please evaluate the suitability of PatchMe for your specific use case and ensure compliance with applicable security requirements before deployment.
 
 ---
+````
