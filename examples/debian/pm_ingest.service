@@ -1,0 +1,6 @@
+[Unit]
+Description=Send PatchMe version data
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/pm_ingest.sh

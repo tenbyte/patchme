@@ -68,6 +68,64 @@ process.on('SIGTERM', () => {
   rateLimiter.destroy()
 })
 
+// Safe JSON parser with detailed error logging
+async function safeParseJSON(req: NextRequest): Promise<{ success: true; data: any } | { success: false; error: string; rawBody: string }> {
+  try {
+    const rawBody = await req.text()
+    
+    // Log raw body for debugging (truncated for security)
+    console.log('Raw request body (first 500 chars):', rawBody.substring(0, 500))
+    
+    // Check for common control characters that break JSON
+    const controlChars = rawBody.match(/[\x00-\x1F\x7F]/g)
+    if (controlChars) {
+      console.log('Found control characters:', controlChars.map(c => `\\x${c.charCodeAt(0).toString(16).padStart(2, '0')}`))
+    }
+    
+    // Try to clean the JSON string
+    const cleanedBody = rawBody
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control chars except \t, \n, \r
+      .trim()
+    
+    if (cleanedBody !== rawBody) {
+      console.log('Cleaned JSON body (removed control characters)')
+    }
+    
+    const parsedData = JSON.parse(cleanedBody)
+    return { success: true, data: parsedData }
+    
+  } catch (error) {
+    const rawBody = await req.text().catch(() => '[Could not read body]')
+    
+    console.error('JSON Parse Error Details:', {
+      error: error instanceof Error ? error.message : String(error),
+      bodyLength: rawBody.length,
+      bodyPreview: rawBody.substring(0, 200),
+      contentType: req.headers.get('content-type'),
+      userAgent: req.headers.get('user-agent'),
+      position: error instanceof SyntaxError ? extractPositionFromError(error.message) : null
+    })
+    
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown JSON parse error',
+      rawBody: rawBody.substring(0, 500) // Truncate for security
+    }
+  }
+}
+
+// Extract position information from JSON parse error
+function extractPositionFromError(errorMessage: string): { position?: number; line?: number; column?: number } | null {
+  const positionMatch = errorMessage.match(/position (\d+)/)
+  const lineColumnMatch = errorMessage.match(/line (\d+) column (\d+)/)
+  
+  return {
+    position: positionMatch ? parseInt(positionMatch[1]) : undefined,
+    line: lineColumnMatch ? parseInt(lineColumnMatch[1]) : undefined,
+    column: lineColumnMatch ? parseInt(lineColumnMatch[2]) : undefined
+  }
+}
+
 // Retry wrapper for database operations with exponential backoff
 async function withRetry<T>(
   operation: () => Promise<T>,
@@ -104,11 +162,33 @@ async function withRetry<T>(
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { key, versions } = body
+    // Safe JSON parsing with detailed error logging
+    const parseResult = await safeParseJSON(req)
+    
+    if (!parseResult.success) {
+      console.error('Failed to parse JSON request:', parseResult.error)
+      return NextResponse.json({ 
+        error: "Invalid JSON format", 
+        details: parseResult.error,
+        hint: "Check for control characters or invalid JSON syntax"
+      }, { status: 400 })
+    }
+    
+    const { key, versions } = parseResult.data
     
     if (!key || !Array.isArray(versions)) {
+      console.error('Invalid request structure:', { hasKey: !!key, versionsType: typeof versions, versionsIsArray: Array.isArray(versions) })
       return NextResponse.json({ error: "Missing key or versions array." }, { status: 400 })
+    }
+
+    // Validate versions array structure
+    const invalidVersions = versions.filter(v => !v || typeof v.variable !== 'string' || typeof v.version !== 'string')
+    if (invalidVersions.length > 0) {
+      console.error('Invalid version entries:', invalidVersions)
+      return NextResponse.json({ 
+        error: "Invalid version entries. Each version must have 'variable' and 'version' strings.",
+        invalidEntries: invalidVersions.length
+      }, { status: 400 })
     }
 
     // Check rate limiting
@@ -135,8 +215,11 @@ export async function POST(req: NextRequest) {
     })
     
     if (!system) {
+      console.error('Invalid API key used:', key.substring(0, 8) + '...')
       return NextResponse.json({ error: "Invalid API key." }, { status: 401 })
     }
+
+    console.log(`Processing ingest for system ${system.name} (${system.id}) with ${versions.length} versions`)
 
     // Load all baselines once
     const baselines = await prisma.baseline.findMany({
@@ -196,10 +279,15 @@ export async function POST(req: NextRequest) {
       console.error('ActivityLog failed:', logError)
     }
 
+    const processed = versions.filter(entry => baselineMap.has(entry.variable)).length
+    const skipped = versions.length - processed
+
+    console.log(`Ingest completed for system ${system.name}: ${processed} processed, ${skipped} skipped`)
+
     return NextResponse.json({ 
       ok: true,
-      processed: versions.filter(entry => baselineMap.has(entry.variable)).length,
-      skipped: versions.length - versions.filter(entry => baselineMap.has(entry.variable)).length
+      processed,
+      skipped
     }, {
       headers: {
         'X-RateLimit-Limit': '100',
@@ -208,7 +296,16 @@ export async function POST(req: NextRequest) {
       }
     })
   } catch (e: any) {
-    console.error('Ingest error:', e)
+    console.error('Ingest error:', {
+      message: e.message,
+      code: e.code,
+      stack: e.stack?.split('\n').slice(0, 5), // First 5 lines of stack trace
+      headers: {
+        'content-type': req.headers.get('content-type'),
+        'user-agent': req.headers.get('user-agent'),
+        'content-length': req.headers.get('content-length')
+      }
+    })
     
     // Special handling for known DB conflicts
     if (e.code === 'P2002') {
