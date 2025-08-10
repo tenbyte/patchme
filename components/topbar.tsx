@@ -43,11 +43,12 @@ export default function TopBar({ userName, userRole }: { userName?: string, user
     <header className="sticky top-0 z-30 bg-background/80 backdrop-blur border-b">
       <div className="mx-auto max-w-screen-2xl px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-emerald-500/15 text-emerald-400 p-2">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <span className="font-semibold">PatchMe</span>
-          {/* Desktop Navigation */}
+          <Link href="/" className="flex items-center gap-2 font-semibold text-foreground">
+            <span className="rounded-lg bg-emerald-500/15 text-emerald-400 p-2 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+              <ShieldCheck className="w-5 h-5" />
+            </span>
+            PatchMe
+          </Link>
           {isLoggedIn && (
             <nav className="ml-4 hidden md:flex items-center gap-1">
               {nav.map((n) => {
@@ -109,9 +110,9 @@ export default function TopBar({ userName, userRole }: { userName?: string, user
                 <SheetContent side="right" className="w-80">
                   <SheetHeader>
                     <SheetTitle className="flex items-center gap-2">
-                      <div className="rounded-lg bg-emerald-500/15 text-emerald-400 p-2">
+                      <Link href="/" className="rounded-lg bg-emerald-500/15 text-emerald-400 p-2 focus:outline-none focus:ring-2 focus:ring-emerald-400">
                         <ShieldCheck className="w-4 h-4" />
-                      </div>
+                      </Link>
                       PatchMe
                     </SheetTitle>
                   </SheetHeader>
@@ -130,7 +131,6 @@ export default function TopBar({ userName, userRole }: { userName?: string, user
 
                     {/* Navigation */}
                     <nav className="space-y-2">
-                      <div className="text-sm font-medium text-muted-foreground px-2 mb-3">Navigation</div>
                       {nav.map((n) => {
                         const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href)
                         return (
