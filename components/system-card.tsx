@@ -28,7 +28,7 @@ function formatUrl(hostname: string): string {
   return `https://${hostname}`
 }
 
-const pillVersion = "rounded-full border px-2.5 py-0.5 text-[11px] bg-muted"
+const pillVersion = "rounded-full border px-2.5 py-0.5 text-[11px]"
 const pillTag = "rounded-full border px-2 py-0.5 text-[11px] bg-background"
 
 export default function SystemCard({ system }: { system: System }) {
@@ -108,10 +108,17 @@ export default function SystemCard({ system }: { system: System }) {
           <HoverCardTrigger asChild>
             <div className="flex flex-wrap gap-1.5">
               {shown.length === 0 ? (
-                <span className={pillVersion}>No baselines</span>
+                <span className={cn(pillVersion, "bg-muted")}>No baselines</span>
               ) : (
                 shown.map((b) => {
                   const val = system.baselineValues?.find((bv) => bv.baselineId === b.id)?.value
+                  const hasWarning = (() => {
+                    if (!val) return true;
+                    if (b.type === "INFO") return false;
+                    if (b.type === "MAX") return parseFloat(val) > parseFloat(b.minVersion);
+                    return parseFloat(val) < parseFloat(b.minVersion); // MIN or default
+                  })();
+                  
                   const getVersionText = () => {
                     if (b.type === "INFO") {
                       return `${b.name}: ${val || "(no value)"}`
@@ -122,14 +129,22 @@ export default function SystemCard({ system }: { system: System }) {
                     return `${b.name}: ${val || "(no value)"} (≥ ${b.minVersion})` // MIN or default
                   }
                   return (
-                    <span key={b.id} className={pillVersion}>
+                    <span 
+                      key={b.id} 
+                      className={cn(
+                        pillVersion,
+                        hasWarning 
+                          ? "bg-amber-500/10 dark:bg-amber-500/5 border-amber-500/50" 
+                          : "bg-muted"
+                      )}
+                    >
                       {getVersionText()}
                     </span>
                   )
                 })
               )}
               {!showAllVersions && versionMore > 0 && (
-                <span className={cn(pillVersion, "cursor-pointer hover:bg-muted/80")}>
+                <span className={cn(pillVersion, "cursor-pointer hover:bg-muted/80 bg-muted")}>
                   +{versionMore} more
                 </span>
               )}
