@@ -89,3 +89,13 @@ echo
 echo "Systemd unit files installed to:"
 echo "  ${SYSTEMD_DIR}/${SERVICE_FILE}"
 echo "  ${SYSTEMD_DIR}/${TIMER_FILE}"
+echo
+
+echo "Test run the ingest script manually (as the user that will run the service):"
+echo "  sudo -u $(logname) /usr/local/bin/pm_ingest.sh"
+echo
+
+echo "Or test the systemd service directly (runs as configured in the service file):"
+echo "  systemctl start --no-block pm_ingest.service"
+echo "  systemctl status pm_ingest.service"
+echo
