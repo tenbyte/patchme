@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect } from "react"
+import { useState, useTransition, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -10,6 +10,7 @@ import { createBaseline } from "@/lib/baseline"
 import type { Baseline } from "@/lib/types"
 import toast from "react-hot-toast"
 import { useRouter } from "next/navigation"
+import { CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 
 async function apiCreateBaseline({ name, variable, type, minVersion }: { name: string; variable: string; type: string; minVersion: string }) {
   const res = await fetch("/api/baselines", {
@@ -47,6 +48,9 @@ export default function CreateBaselineDialog({ open = false, onOpenChange = () =
   const [minVersion, setMinVersion] = useState("")
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [variableStatus, setVariableStatus] = useState<'idle'|'checking'|'ok'|'exists'|null>(null)
+  const variableTimeout = useRef<NodeJS.Timeout | null>(null)
+  const lastCheckedVariable = useRef<string>("")
   const router = useRouter()
 
   // Setze Werte wenn editBaseline sich ändert
@@ -63,7 +67,32 @@ export default function CreateBaselineDialog({ open = false, onOpenChange = () =
       setMinVersion("")
     }
     setError(null)
+    setVariableStatus(null)
   }, [editBaseline])
+
+  const checkVariable = (value: string) => {
+    if (variableTimeout.current) clearTimeout(variableTimeout.current)
+    setVariableStatus('checking')
+    variableTimeout.current = setTimeout(async () => {
+      if (lastCheckedVariable.current === value) return
+      lastCheckedVariable.current = value
+      try {
+        const res = await fetch(`/api/baselines?variable=${encodeURIComponent(value)}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.exists && (!editBaseline || editBaseline.variable !== value)) {
+            setVariableStatus('exists')
+          } else {
+            setVariableStatus('ok')
+          }
+        } else {
+          setVariableStatus(null)
+        }
+      } catch {
+        setVariableStatus(null)
+      }
+    }, 500)
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -108,7 +137,28 @@ export default function CreateBaselineDialog({ open = false, onOpenChange = () =
           </div>
           <div className="grid gap-2">
             <Label htmlFor="bvar">Variable</Label>
-            <Input id="bvar" name="baselineVariable" autoComplete="off" value={variable} onChange={(e) => setVariable(e.target.value)} required placeholder="PHP_Version" />
+            <div className="flex items-center gap-2">
+              <Input 
+                id="bvar" 
+                name="baselineVariable" 
+                autoComplete="off" 
+                value={variable} 
+                onChange={(e) => {
+                  setVariable(e.target.value)
+                  if (e.target.value) checkVariable(e.target.value)
+                  else setVariableStatus(null)
+                }} 
+                required 
+                placeholder="PHP_Version"
+                className="flex-1"
+              />
+              {variableStatus === 'checking' && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+              {variableStatus === 'ok' && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+              {variableStatus === 'exists' && <XCircle className="w-4 h-4 text-red-500" />}
+            </div>
+            {variableStatus === 'exists' && (
+              <p className="text-sm text-red-500">This variable already exists</p>
+            )}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="btype">Type</Label>

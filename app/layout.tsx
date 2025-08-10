@@ -41,6 +41,11 @@ html {
 }
         `}</style>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/apple-touch-icon.png" />
+        <link rel="shortcut icon" href="/apple-touch-icon.png" />
+        <link rel="mask-icon" href="/apple-touch-icon.png" color="#000000" />
       </head>
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
