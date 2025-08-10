@@ -2,8 +2,8 @@
 
 #file location /usr/local/bin/pm_ingest.sh
 set -euo pipefail
-DOMAIN="https://pm.mytenbyte.de"
-KEY="pm_2DOVVCY0"
+DOMAIN="https://yourdomain.com"
+KEY="pm_XXXXXXXX"
 NC_PATH="/var/www/nextcloud"
 
 # PHP version
@@ -34,12 +34,11 @@ UPTIME_DAYS=$(awk "{print int(\$1/86400)}" /proc/uptime 2>/dev/null || echo "")
 # Build payload
 payload=$(cat <<JSON
 {
-  "key": "pm_2DOVVCY0",
+  "key": "${KEY}",
   "versions": [
     { "variable": "PHP_Version",   "version": "${PHP_VERSION}" },
     { "variable": "NC_Version",    "version": "${NC_VERSION}" },
-    { "variable": "Mysql_Version", "version": "${MYSQL_VERSION}" },
-    { "variable": "Uptime_Days",   "version": "${UPTIME_DAYS}" }
+    { "variable": "Mysql_Version", "version": "${MYSQL_VERSION}" }
   ]
 }
 JSON
