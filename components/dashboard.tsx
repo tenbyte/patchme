@@ -36,11 +36,11 @@ function formatLogLine(log: ActivityLog) {
   const sys = log.systemName ?? "Unknown"
   let metaPreview = ""
   if (log.meta && Array.isArray(log.meta.versions)) {
-    const preview = log.meta.versions.slice(0, 3).map((e: { variable: string; version: string }) => {
+    // Zeige ALLE Versionen an, ohne das "+X more"
+    const allVersions = log.meta.versions.map((e: { variable: string; version: string }) => {
       return `${e.variable}=${e.version}`
     })
-    const more = log.meta.versions.length > 3 ? ` +${log.meta.versions.length - 3} more` : ""
-    metaPreview = `${preview.join(", ")}${more}`
+    metaPreview = allVersions.join(", ")
   }
   return `[${ts}] ${sys}: ${metaPreview}`
 }
