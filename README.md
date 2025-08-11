@@ -25,7 +25,6 @@ For Linux environments, this is typically automated using a script and a schedul
 
 ```bash
 curl -X POST https://your-patchme-instance/api/ingest \
-  -H "Authorization: Bearer <YOUR_API_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
     "key": "<API_KEY>",
