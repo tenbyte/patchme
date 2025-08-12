@@ -1,0 +1,68 @@
+#!/bin/bash
+set -euo pipefail
+
+# === Configuration ===
+DOMAIN="https://patchme.local"
+KEY="pm_XXXXX"
+NC_PATH="/var/www/nextcloud"
+
+# === Detect Versions ===
+# PHP version
+if command -v php >/dev/null 2>&1; then
+  PHP_Version=$(php -r 'echo PHP_VERSION;') || PHP_Version=""
+else
+  PHP_Version=""
+fi
+
+# PostgreSQL version
+if command -v psql >/dev/null 2>&1; then
+  Pgsql_Version=$(psql --version | grep -oP '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n 1)
+else
+  Pgsql_Version=""
+fi
+
+# Nextcloud version
+if [ -d "$NC_PATH" ] && command -v php >/dev/null 2>&1; then
+  NC_Version=$(sudo -u www-data php "$NC_PATH/occ" status 2>/dev/null | awk '/version:/{print $3}') || NC_Version=""
+else
+  NC_Version=""
+fi
+
+# Linux distribution
+if command -v lsb_release >/dev/null 2>&1; then
+  Distro_Linux=$(lsb_release -ds) || Distro_Linux=""
+elif [ -f /etc/os-release ]; then
+  Distro_Linux=$(grep '^PRETTY_NAME=' /etc/os-release | cut -d= -f2 | tr -d '"') || Distro_Linux=""
+else
+  Distro_Linux=""
+fi
+
+# Uptime in days
+if command -v uptime >/dev/null 2>&1; then
+  Uptime_Days=$(awk '{print int($1/86400)}' /proc/uptime) || Uptime_Days=""
+else
+  Uptime_Days=""
+fi
+
+# === Build JSON payload ===
+payload=$(cat <<EOF
+{
+  "key": "$KEY",
+  "versions": [
+    { "variable": "PHP_Version", "version": "$PHP_Version" },
+    { "variable": "Pgsql_Version", "version": "$Pgsql_Version" },
+    { "variable": "NC_Version", "version": "$NC_Version" },
+    { "variable": "Distro_Linux", "version": "$Distro_Linux" },
+    { "variable": "Uptime_Days", "version": "$Uptime_Days" }
+  ]
+}
+EOF
+)
+
+# === POST to API ===
+if ! curl -fsS -X POST "$DOMAIN/api/ingest" \
+  -H "Content-Type: application/json" \
+  -d "$payload"; then
+  echo "ingest failed"
+fi
+
